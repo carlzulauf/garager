@@ -37,9 +37,9 @@ class Garage
 
   def self.current
     @@current ||= if defined?(REAL_GARAGE) && REAL_GARAGE
-                    Garage.new
+                    Garage.new.setup
                   else
-                    FakeGarage.new
+                    FakeGarage.new.setup
                   end
   end
 end
