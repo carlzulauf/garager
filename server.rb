@@ -3,7 +3,7 @@ $LOAD_PATH.unshift File.join(File.expand_path(File.dirname(__FILE__)), "lib")
 require 'bundler/setup'
 Bundler.require(:default)
 
-REAL_GARAGE = !!(`uname -a` =~ /raspberrypi/)
+REAL_GARAGE = !!(`uname -a` =~ /armv6l/)
 
 require 'logger'
 require 'garage'
