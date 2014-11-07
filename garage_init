@@ -2,6 +2,8 @@
 
 # INSTALL: sudo update-rc.d -f garage_init start 4
 
+`echo "bar" > /tmp/foo`
+
 require 'fileutils'
 require 'tempfile'
 
