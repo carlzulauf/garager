@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+# INSTALL: sudo update-rc.d -f garage_init start 4
+
 require 'fileutils'
 require 'tempfile'
 
