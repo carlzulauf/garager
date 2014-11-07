@@ -8,7 +8,7 @@ require 'logger'
 require 'fileutils'
 require 'tempfile'
 
-BUNDLE="/usr/local/bin/bundle"
+# BUNDLE="/usr/local/bin/bundle"
 DIR="/home/pi/perfect_pi"
 LOG="/root"
 
@@ -18,7 +18,7 @@ begin
   case ARGV.first
   when /start/
     FileUtils.cd(DIR)
-    command = "#{BUNDLE} rackup -p 3000"
+    command = "/usr/local/bin/rackup -p 3000"
     logger.info "exec: #{command}"
     exec command
   end
