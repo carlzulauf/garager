@@ -4,6 +4,7 @@
 
 `echo "bar" > /tmp/foo`
 
+require 'logger'
 require 'fileutils'
 require 'tempfile'
 
