@@ -21,18 +21,22 @@ class Garage
 
   def setup
     logger.info "Garage#setup"
-    `gpio write #{pin} 1`
-    `gpio mode #{pin} out`
+    gpio "write #{pin} 1"
+    gpio "mode #{pin} out"
     self
   end
 
   def toggle
     logger.info "Garage#toggle. Presumed #{presumed}"
-    `gpio write #{pin} 0`
+    gpio "write #{pin} 0"
     sleep 0.5
-    `gpio write #{pin} 1`
+    gpio "write #{pin} 1"
     self.presumed = presumed == :closed ? :open : :closed
     self
+  end
+
+  def gpio(cmd)
+    `/usr/local/bin/gpio #{cmd}`
   end
 
   def self.current
