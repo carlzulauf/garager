@@ -1,0 +1,8 @@
+%h1 Garage Door
+
+%p
+  Status:
+  = "#{current_garage.class.to_s} presumed #{current_garage.presumed}"
+
+%form{action: "/open", method: "POST"}
+  %input{type: "submit", value: "#{current_garage.action} Garage Door"}

@@ -1,0 +1,38 @@
+GIT
+  remote: git://github.com/carlzulauf/threasy.git
+  revision: ccb7493aa026a9379c561876e38556a7b96b2d7b
+  specs:
+    threasy (0.0.1)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    coderay (1.1.0)
+    haml (4.0.5)
+      tilt
+    method_source (0.8.2)
+    pry (0.10.1)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
+      slop (~> 3.4)
+    puma (2.9.2)
+      rack (>= 1.1, < 2.0)
+    rack (1.5.2)
+    rack-protection (1.5.3)
+      rack
+    sinatra (1.4.5)
+      rack (~> 1.4)
+      rack-protection (~> 1.4)
+      tilt (~> 1.3, >= 1.3.4)
+    slop (3.6.0)
+    tilt (1.4.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  haml
+  pry
+  puma
+  sinatra
+  threasy!
