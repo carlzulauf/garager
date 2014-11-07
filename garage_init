@@ -18,7 +18,7 @@ begin
   case ARGV.first
   when /start/
     FileUtils.cd(DIR)
-    command = "/usr/local/bin/rackup -p 3000"
+    command = "/usr/local/bin/rackup --daemonize --port 3000"
     logger.info "exec: #{command}"
     exec command
   end
