@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+
+# Run this on the pi. Ignore LSB warnings.
+
+pwd = File.expand_path(File.dirname(__FILE__))
+home = File.expand_path("~")
+init_script_name = "garage_init"
+init_script_path = File.join(pwd, init_script_name)
+
+`sudo apt-get -y install ruby-dev git-core`
+
+if `which gpio`.empty?
+  `sudo apt-get install git-core` if `which git`.empty?
+  Dir.chdir home
+  `git clone git://git.drogon.net/wiringPi`
+  wiring = File.join(home, "wiringPi")
+  Dir.chdir wiring
+  `#{File.join(wiring, "build")}`
+end
+
+Dir.chdir(pwd)
+`sudo gem install bundler`
+`bundle install`
+
+`sudo cp #{init_script_path} /etc/init.d/#{init_script_name}`
+`sudo update-rc.d -f garage_init start 4`
+`sudo /etc/init.d/#{init_script_name}`
