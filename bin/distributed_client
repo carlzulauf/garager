@@ -26,9 +26,11 @@ loop do
     token = server.register(name: name, key: key)
     logger.info "Client token: #{token}"
 
-    value = server.listen(token)
-    logger.info "Received command: #{value}"
-    garage.toggle if value == "open"
+    loop do
+      value = server.listen(token)
+      logger.info "Received command: #{value}"
+      garage.toggle if value == "open"
+    end
 
   rescue DRb::DRbConnError => e
     logger.error e.inspect
