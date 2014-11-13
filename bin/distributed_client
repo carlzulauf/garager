@@ -33,6 +33,7 @@ loop do
 
   rescue DRb::DRbConnError => e
     logger.error e.inspect
+    logger.info e.backtrace
     sleep 10
   end
 end
