@@ -2,7 +2,7 @@
 
 # INSTALL: sudo update-rc.d -f garage_init start 4
 
-DIR="/home/pi/perfect_pi"
+DIR="/home/pi/garager"
 
 begin
   case ARGV.first

@@ -1,0 +1,38 @@
+#!/usr/bin/env ruby
+
+require_relative "../lib/environment"
+require 'drb/drb'
+
+# The URI to connect to
+SERVER_URI="druby://192.168.1.2:8787"
+
+# Start a local DRbServer to handle callbacks.
+#
+# Not necessary for this small example, but will be required
+# as soon as we pass a non-marshallable object as an argument
+# to a dRuby call.
+DRb.start_service
+
+garage = Garage.current
+logger = garage.logger
+
+name = `hostname`.chomp
+key = "533e98315f3de22fc4006674285aa837"
+
+loop do
+  begin
+    server = DRbObject.new_with_uri(SERVER_URI)
+
+    token = server.register(name: name, key: key)
+    logger.info "Client token: #{token}"
+
+    server.listen(token) do |value|
+      logger.info "Received command: #{value}"
+      garage.toggle if value == "open"
+    end
+
+  rescue DRb::DRbConnError => e
+    logger.error e.inspect
+    sleep 10
+  end
+end

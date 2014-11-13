@@ -1,5 +1,3 @@
-require_relative "environment"
-
 class GarageServer < Sinatra::Application
   set :root, File.expand_path(".")
 

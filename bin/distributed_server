@@ -1,0 +1,85 @@
+#!/usr/bin/env ruby
+
+require_relative "../lib/environment"
+
+require 'drb/drb'
+require 'securerandom'
+require 'singleton'
+
+class DistributedServer
+  include Singleton
+
+  attr_accessor :clients
+
+  def initialize
+    self.clients = {}
+  end
+
+  def register(options = {})
+    if options[:key] == access_key
+      SecureRandom.hex.tap do |token|
+        clients[token] = {
+          name: options[:name],
+          queue: Queue.new,
+          seen: Time.now
+        }
+      end
+    else
+      puts "invalid key"
+      client.close
+    end
+  end
+
+  def listen(token)
+    if clients[token]
+      loop do
+        yield clients[token][:queue].pop
+        clients[token][:seen] = Time.now
+      end
+    else
+      puts "unauthorized"
+      client.close
+    end
+  end
+
+  def client
+    Thread.current['DRb']['client']
+  end
+
+  def access_key
+    "533e98315f3de22fc4006674285aa837"
+  end
+
+  def self.uri
+    "druby://:8787"
+  end
+end
+
+class DistributedWeb < Sinatra::Application
+  set :root, File.expand_path(".")
+
+  helpers do
+    def front
+      DistributedServer.instance
+    end
+
+    def clients
+      front.clients.sort_by{|t, c| Time.now - c[:seen] }
+    end
+  end
+
+  get '/' do
+    haml :clients
+  end
+
+  post '/:client_id/open' do
+    client = front.clients[params[:client_id]]
+    client[:queue].push "open"
+    redirect to('/')
+  end
+end
+
+# $SAFE = 1   # disable eval() and friends
+
+DRb.start_service(DistributedServer.uri, DistributedServer.instance)
+DistributedWeb.run!
