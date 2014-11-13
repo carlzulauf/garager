@@ -1,4 +1,4 @@
-require_relative "lib/environment"
-require_relative "lib/garage_server"
+require "./lib/environment"
+require "./lib/garage_server"
 
 run GarageServer
