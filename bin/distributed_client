@@ -9,7 +9,9 @@ SERVER_URI="druby://192.168.1.2:8787"
 garage = Garage.current
 logger = garage.logger
 
+ip = Socket.ip_address_list.detect{ |ip| !ip.ipv4_loopback? }
 name = `hostname`.chomp
+name << "|#{ip.ip_address}" if ip
 key = "533e98315f3de22fc4006674285aa837"
 
 loop do
