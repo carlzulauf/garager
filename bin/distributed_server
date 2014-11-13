@@ -59,6 +59,7 @@ end
 
 class DistributedWeb < Sinatra::Application
   set :root, File.expand_path(".")
+  set :bind, '0.0.0.0'
 
   helpers do
     def front
