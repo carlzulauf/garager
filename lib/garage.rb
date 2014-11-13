@@ -50,12 +50,12 @@ end
 
 class FakeGarage < Garage
   def setup
-    logger.info "#FakeGarage#setup"
+    logger.info "FakeGarage#setup"
     self
   end
 
   def toggle
-    logger.info "#FakeGarage#toggle. Presumed #{presumed}"
+    logger.info "FakeGarage#toggle. Presumed #{presumed}"
     self.presumed = presumed == :closed ? :open : :closed
     self
   end

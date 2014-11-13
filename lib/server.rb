@@ -1,14 +1,8 @@
-$LOAD_PATH.unshift File.join(File.expand_path(File.dirname(__FILE__)), "lib")
-
-require 'bundler/setup'
-Bundler.require(:default)
-
-REAL_GARAGE = !!(`uname -a` =~ /armv6l/)
-
-require 'logger'
-require 'garage'
+require_relative "environment"
 
 class GarageServer < Sinatra::Application
+  set :root, File.expand_path(".")
+
   helpers do
     def current_garage
       @current_garage ||= Garage.current.tap { |g| g.logger = logger }
@@ -26,5 +20,9 @@ class GarageServer < Sinatra::Application
   post '/open' do
     current_garage.toggle
     redirect to('/')
+  end
+
+  get '/test' do
+    haml "%h1 #{settings.root}"
   end
 end
