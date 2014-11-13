@@ -4,7 +4,7 @@ require_relative "../lib/environment"
 require 'drb/drb'
 
 # The URI to connect to
-SERVER_URI="druby://192.168.1.2:8787"
+SERVER_URI="druby://linkleaf.com:8787"
 
 garage = Garage.current
 logger = garage.logger

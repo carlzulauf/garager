@@ -32,10 +32,6 @@ class DistributedServer
 
   def listen(token)
     if clients[token]
-      # loop do
-      #   yield clients[token][:queue].pop
-      #   clients[token][:seen] = Time.now
-      # end
       clients[token][:seen] = Time.now
       clients[token][:queue].pop
     else
