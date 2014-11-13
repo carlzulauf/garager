@@ -10,6 +10,7 @@ garage = Garage.current
 logger = garage.logger
 
 ip = Socket.ip_address_list.detect{ |ip| !ip.ipv4_loopback? }
+puts "ip: #{ip.inspect}"
 name = `hostname`.chomp
 name << "|#{ip.ip_address}" if ip
 key = "533e98315f3de22fc4006674285aa837"
