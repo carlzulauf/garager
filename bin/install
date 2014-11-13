@@ -2,12 +2,14 @@
 
 # Run this on the pi. Ignore LSB warnings.
 
-pwd = File.expand_path(File.dirname(__FILE__))
+bin_dir = File.expand_path(File.dirname(__FILE__))
+pwd = File.expand_path(File.join(bin_dir, ".."))
 home = File.expand_path("~")
 init_script_name = "garage_init"
-init_script_path = File.join(pwd, init_script_name)
+init_script_path = File.join(bin_dir, init_script_name)
 
-`sudo apt-get -y install ruby-dev git-core`
+`sudo apt-get update`
+`sudo apt-get -y install ruby-dev git-core libssl-dev`
 
 if `which gpio`.empty?
   `sudo apt-get install git-core` if `which git`.empty?
