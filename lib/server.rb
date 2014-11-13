@@ -5,11 +5,7 @@ class GarageServer < Sinatra::Application
 
   helpers do
     def current_garage
-      @current_garage ||= Garage.current.tap { |g| g.logger = logger }
-    end
-
-    def escape_html(text)
-      Rack::Utils.escape_html(text)
+      @current_garage ||= Garage.current(logger: logger)
     end
   end
 
@@ -20,9 +16,5 @@ class GarageServer < Sinatra::Application
   post '/open' do
     current_garage.toggle
     redirect to('/')
-  end
-
-  get '/test' do
-    haml "%h1 #{settings.root}"
   end
 end

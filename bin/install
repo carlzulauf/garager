@@ -24,4 +24,4 @@ Dir.chdir(pwd)
 
 `sudo cp #{init_script_path} /etc/init.d/#{init_script_name}`
 `sudo update-rc.d -f garage_init start 4`
-`sudo /etc/init.d/#{init_script_name}`
+`sudo /etc/init.d/#{init_script_name} start`

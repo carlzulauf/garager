@@ -39,11 +39,11 @@ class Garage
     `/usr/local/bin/gpio #{cmd}`
   end
 
-  def self.current
+  def self.current(options = {})
     @@current ||= if defined?(REAL_GARAGE) && REAL_GARAGE
-                    Garage.new.setup
+                    Garage.new(options).setup
                   else
-                    FakeGarage.new.setup
+                    FakeGarage.new(options).setup
                   end
   end
 end
