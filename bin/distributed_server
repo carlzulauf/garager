@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 
-require_relative "../lib/environment"
+# require_relative "../lib/environment"
+require 'bundler/setup'
+Bundler.require(:default)
 
 require 'drb/drb'
 require 'securerandom'
@@ -18,11 +20,13 @@ class DistributedServer
   def register(options = {})
     if options[:key] == access_key
       SecureRandom.hex.tap do |token|
+        puts "Registering #{options[:name]}"
         clients[token] = {
           name: options[:name],
           queue: Queue.new,
           seen: Time.now
         }
+        pp clients.inspect
       end
     else
       puts "invalid key"
@@ -53,32 +57,33 @@ class DistributedServer
   end
 end
 
-class DistributedWeb < Sinatra::Application
-  set :root, File.expand_path(".")
-  set :bind, '0.0.0.0'
+# class DistributedWeb < Sinatra::Application
+#   set :root, File.expand_path(".")
+#   set :bind, '0.0.0.0'
 
-  helpers do
-    def front
-      DistributedServer.instance
-    end
+#   helpers do
+#     def front
+#       DistributedServer.instance
+#     end
 
-    def clients
-      front.clients.sort_by{|t, c| Time.now - c[:seen] }
-    end
-  end
+#     def clients
+#       front.clients.sort_by{|t, c| Time.now - c[:seen] }
+#     end
+#   end
 
-  get '/' do
-    haml :clients
-  end
+#   get '/' do
+#     haml :clients
+#   end
 
-  post '/:client_id/open' do
-    client = front.clients[params[:client_id]]
-    client[:queue].push "open"
-    redirect to('/')
-  end
-end
+#   post '/:client_id/open' do
+#     client = front.clients[params[:client_id]]
+#     client[:queue].push "open"
+#     redirect to('/')
+#   end
+# end
 
 # $SAFE = 1   # disable eval() and friends
 
 DRb.start_service(DistributedServer.uri, DistributedServer.instance)
-DistributedWeb.run!
+# DistributedWeb.run!
+Pry.start
