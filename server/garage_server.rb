@@ -3,7 +3,7 @@ class GarageServer < Sinatra::Application
 
   helpers do
     def current_garage
-      @current_garage ||= Garage.current(logger: logger)
+      @current_garage ||= Garager::Garage.current(logger: logger)
     end
   end
 

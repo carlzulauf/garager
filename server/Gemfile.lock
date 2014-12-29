@@ -1,3 +1,8 @@
+PATH
+  remote: ..
+  specs:
+    garager (0.2.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -25,6 +30,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  garager!
   haml
   pry
   puma
