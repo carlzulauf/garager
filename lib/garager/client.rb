@@ -17,7 +17,7 @@ module Garager
     end
 
     def key
-      options.fetch(:key) { "533e98315f3de22fc4006674285aa837" }
+      options.fetch(:key) { "PUT A REAL KEY HERE" }
     end
 
     def garage

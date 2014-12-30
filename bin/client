@@ -10,4 +10,8 @@ require 'logger'
 require 'garager/garage'
 require 'garager/client'
 
-Garager::Client.new.listen
+Garager::Client.new(
+  logger: Logger.new("log/client.log"),
+  uri: "druby://underbee.linkleaf.com:8787",
+  key: "533e98315f3de22fc4006674285aa837"
+).listen
