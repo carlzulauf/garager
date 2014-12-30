@@ -57,7 +57,7 @@ module Garager
     def handle_command(command)
       logger.info "Received command: #{command}"
       case command
-      when "open"
+      when :open
         garage.toggle
       end
     end

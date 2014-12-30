@@ -7,5 +7,6 @@ require 'logger'
 
 require 'garager/garage'
 require 'garager/client'
+require 'garager/server'
 
 Pry.start
