@@ -8,7 +8,7 @@ begin
   case ARGV.first
   when /start/
     Dir.chdir(DIR)
-    command = "/usr/local/bin/rackup --daemonize --port 3000"
+    command = "daemon bin/client"
     exec command
   end
 rescue => e
