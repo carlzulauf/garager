@@ -21,7 +21,7 @@ module Garager
     end
 
     def garage
-      @garage ||= options.fetch(:garage) { Garager::Garage.current }
+      @garage ||= options.fetch(:garage) { Garager::Garage.current(options) }
     end
 
     def ip
@@ -87,6 +87,10 @@ module Garager
           sleep 5
         end
       end
+    end
+
+    def inspect
+      "#<Garager::Client:#{object_id}>"
     end
 
   end
