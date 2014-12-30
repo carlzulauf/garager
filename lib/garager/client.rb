@@ -6,6 +6,7 @@ module Garager
     class TimeoutError < StandardError; end
 
     attr_accessor :options
+    attr_reader :thread
 
     def initialize(options = {})
       self.options = options
@@ -62,21 +63,29 @@ module Garager
       end
     end
 
+    def start
+      @thread = Thread.new { listen }
+      self
+    end
+
     def listen
       loop do
+        begin
+          server = DRbObject.new_with_uri(uri)
 
-        server = DRbObject.new_with_uri(uri)
+          token = server.register(name: name, key: key)
+          logger.info "Client token: #{token}"
 
-        token = server.register(name: name, key: key)
-        logger.info "Client token: #{token}"
-
-        loop do
-          success = with_timeout do
-            handle_command server.listen(token)
+          loop do
+            success = with_timeout do
+              handle_command server.listen(token)
+            end
+            break unless success
           end
-          break unless success
+        rescue DRb::DRbConnError => e
+          logger.error e.inspect
+          sleep 5
         end
-
       end
     end
 

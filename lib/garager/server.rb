@@ -34,10 +34,16 @@ module Garager
 
     def start
       DRb.start_service(uri, shared)
+      self
+    end
+
+    def stop
+      DRb.stop_service
+      self
     end
 
     def register(options = {})
-      puts "Registering: #{options.inspect}"
+      logger.info "Registering: #{options.inspect}"
       device = Device.new(options)
       devices[device.key] = device if valid_key?(device.key)
       device.token
@@ -59,6 +65,10 @@ module Garager
       devices.values.each(&:open)
     end
 
+    def inspect
+      "#<Garager::Server:#{object_id}>"
+    end
+
     class Shared
       def initialize(server)
         @server = server
@@ -69,7 +79,7 @@ module Garager
       end
 
       def listen(token)
-        @server.listen(token).tap{ |r| puts r }
+        @server.listen(token)
       end
     end
 
@@ -99,6 +109,10 @@ module Garager
 
       def open
         queue.push :open
+      end
+
+      def inspect
+        "#<Garager::Server::Device:#{object_id} queue:#{queue.count}>"
       end
     end
 
