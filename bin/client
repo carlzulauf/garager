@@ -6,11 +6,27 @@ Bundler.require(:default)
 REAL_GARAGE = !!(`uname -a` =~ /armv6l/)
 
 require 'logger'
+require 'yaml'
 
 require 'garager/garage'
 require 'garager/client'
 
-Garager::Client.new(
-  uri: "druby://underbee.linkleaf.com:8787",
-  key: "533e98315f3de22fc4006674285aa837"
-).listen
+config_template = {
+  uri: "druby://example.com:8787",
+  key: "PUT-A-UNIQUE-KEY-HERE"
+}
+config_path = "config/garager.yml"
+
+unless File.exist?(config_path)
+  File.write(config_path, config_template.to_yaml)
+  puts <<-ERROR
+MISSING REQUIRED FILE #{config_path}
+Creating file for you from template.
+Please edit this file with your device's key for your server.
+  ERROR
+  exit
+end
+
+config = YAML.load_file(config_path)
+
+Garager::Client.new(config).listen

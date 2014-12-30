@@ -8,8 +8,7 @@ begin
   case ARGV.first
   when /start/
     Dir.chdir(DIR)
-    command = "daemon bin/client"
-    exec command
+    exec "daemon bin/client"
   end
 rescue => e
   puts %[#{e.class.to_s}\n#{e.backtrace.join("\n")}]

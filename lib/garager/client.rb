@@ -17,7 +17,9 @@ module Garager
     end
 
     def key
-      options.fetch(:key) { "PUT A REAL KEY HERE" }
+      options.fetch(:key) do
+        raise ArgumentError, "Missing required option: key"
+      end
     end
 
     def garage
