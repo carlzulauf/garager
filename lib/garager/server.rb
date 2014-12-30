@@ -13,7 +13,7 @@ module Garager
     end
 
     def valid_key?(key)
-      true
+      key == "533e98315f3de22fc4006674285aa837"
     end
 
     def uri
