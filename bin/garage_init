@@ -15,9 +15,11 @@ begin
       "--background",
       "--pidfile #{pid}",
       "--make-pidfile",
-      "--startas #{cmd}"
+      "--exec #{cmd}"
     ]
-    exec "start-stop-daemon #{options.join(' ')}"
+    daemon_cmd = "start-stop-daemon #{options.join(' ')}"
+    puts daemon_cmd
+    exec daemon_cmd
   when /stop/
     exec "start-stop-daemon --stop --pidfile #{pid}"
   end
