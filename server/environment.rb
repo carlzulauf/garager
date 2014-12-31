@@ -1,7 +1,8 @@
 require 'bundler/setup'
 Bundler.require(:default)
 
-REAL_GARAGE = !!(`uname -a` =~ /armv6l/)
-
 require 'logger'
-require 'garager/garage'
+require 'garager/server'
+
+config = YAML.load_file("../config/server.yml")
+MyGarage = Garager::Server.new(config).start

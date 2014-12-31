@@ -2,8 +2,8 @@ class GarageServer < Sinatra::Application
   set :root, File.expand_path(".")
 
   helpers do
-    def current_garage
-      @current_garage ||= Garager::Garage.current(logger: logger)
+    def garage
+      MyGarage
     end
   end
 
@@ -12,7 +12,7 @@ class GarageServer < Sinatra::Application
   end
 
   post '/open' do
-    current_garage.toggle
+    garage.open
     redirect to('/')
   end
 end
