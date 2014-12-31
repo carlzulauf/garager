@@ -13,7 +13,14 @@ module Garager
     end
 
     def valid_key?(key)
-      key == "533e98315f3de22fc4006674285aa837"
+      keys.member?(key)
+    end
+
+    def keys
+      options.fetch(:keys) do
+        logger.error "No valid API keys are configured for Garager::Server"
+        []
+      end
     end
 
     def uri
