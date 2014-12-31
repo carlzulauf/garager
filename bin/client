@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+puts ENV.inspect
+
 require 'bundler/setup'
 Bundler.require(:default)
 
