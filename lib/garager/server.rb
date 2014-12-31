@@ -89,8 +89,8 @@ module Garager
         @server.register(options)
       end
 
-      def listen(token)
-        @server.listen(token)
+      def listen(key, token)
+        @server.listen(key, token)
       end
     end
 
