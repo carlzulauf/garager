@@ -45,7 +45,7 @@ module Garager
     end
 
     def timeout
-      options.fetch(:timeout) { 60 } # seconds
+      options.fetch(:timeout) { 20 } # seconds
     end
 
     def with_timeout(&block)

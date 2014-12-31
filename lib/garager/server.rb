@@ -28,7 +28,7 @@ module Garager
     end
 
     def timeout
-      options.fetch(:timeout) { 15 }
+      options.fetch(:timeout) { 10 }
     end
 
     def logger
