@@ -52,13 +52,17 @@ module Garager
     def register(options = {})
       logger.info "Registering: #{options.inspect}"
       device = Device.new(options)
-      devices[device.key] = device if valid_key?(device.key)
-      device.token
+      if valid_key?(device.key)
+        devices[device.key] = device
+        device.token
+      else
+        client.close
+      end
     end
 
-    def listen(token)
-      device = devices.values.detect { |d| d.token == token }
-      if device
+    def listen(key, token)
+      device = devices[key]
+      if device && device.token == token
         Timeout.timeout(timeout) { device.pop }
       else
         logger.info "Unauthorized: #{token.inspect}"

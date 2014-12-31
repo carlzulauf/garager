@@ -79,7 +79,7 @@ module Garager
 
           loop do
             success = with_timeout do
-              handle_command server.listen(token)
+              handle_command server.listen(key, token)
             end
             break unless success
           end
