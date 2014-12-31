@@ -15,7 +15,7 @@ config_template = {
   uri: "druby://example.com:8787",
   key: "PUT-A-UNIQUE-KEY-HERE"
 }
-config_path = "config/garager.yml"
+config_path = "config/client.yml"
 
 unless File.exist?(config_path)
   File.write(config_path, config_template.to_yaml)
