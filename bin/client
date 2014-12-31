@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-puts ENV.inspect
+Dir.chdir File.join(File.expand_path(File.dirname(__FILE__)), "..")
 
 require 'bundler/setup'
 Bundler.require(:default)
