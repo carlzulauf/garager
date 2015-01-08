@@ -8,22 +8,30 @@ home = File.expand_path("~")
 init_script_name = "garage_init"
 init_script_path = File.join(bin_dir, init_script_name)
 
-`sudo apt-get update`
-`sudo apt-get -y install ruby-dev git-core libssl-dev`
+def run(cmd)
+  puts cmd
+  `#{cmd}`
+end
+
+puts "Installing all required components and init script..."
+puts
+
+run "sudo apt-get update"
+run "sudo apt-get -y install ruby-dev git-core libssl-dev"
 
 if `which gpio`.empty?
-  `sudo apt-get install git-core` if `which git`.empty?
+  run "sudo apt-get install git-core" if `which git`.empty?
   Dir.chdir home
-  `git clone git://git.drogon.net/wiringPi`
+  run "git clone git://git.drogon.net/wiringPi"
   wiring = File.join(home, "wiringPi")
   Dir.chdir wiring
-  `#{File.join(wiring, "build")}`
+  run "#{File.join(wiring, "build")}"
 end
 
 Dir.chdir(pwd)
-`sudo gem install bundler`
-`bundle install`
+run "sudo gem install bundler"
+run "bundle install"
 
-`sudo cp #{init_script_path} /etc/init.d/#{init_script_name}`
-`sudo update-rc.d -f garage_init start 4`
-`sudo /etc/init.d/#{init_script_name} start`
+run "sudo cp #{init_script_path} /etc/init.d/#{init_script_name}"
+run "sudo update-rc.d -f garage_init start 4"
+run "sudo /etc/init.d/#{init_script_name} start"
