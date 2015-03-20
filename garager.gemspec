@@ -16,8 +16,6 @@ Gem::Specification.new do |s|
   s.files         = %w( Gemfile README.md LICENSE.txt garager.gemspec )
   s.files        += Dir.glob("lib/**/*")
   s.files        += Dir.glob("bin/*")
-  s.executables   = s.files.grep(%r{^bin/}) { |f| File.basename(f) }
-  # s.test_files    = s.files.grep(%r{^(test|spec|features)/})
   s.require_paths = ["lib"]
 
   s.add_development_dependency "bundler", "~> 1.7"
