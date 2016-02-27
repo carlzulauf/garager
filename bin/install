@@ -20,7 +20,6 @@ run "sudo apt-get update"
 run "sudo apt-get -y install ruby-dev git-core libssl-dev"
 
 if `which gpio`.empty?
-  run "sudo apt-get install git-core" if `which git`.empty?
   Dir.chdir home
   run "git clone git://git.drogon.net/wiringPi"
   wiring = File.join(home, "wiringPi")
