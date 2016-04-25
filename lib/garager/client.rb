@@ -22,8 +22,12 @@ module Garager
       end
     end
 
+    def garage_options
+      options.merge(logger: logger)
+    end
+
     def garage
-      @garage ||= options.fetch(:garage) { Garager::Garage.current(options) }
+      @garage ||= options.fetch(:garage) { Garager::Garage.current(garage_options) }
     end
 
     def ip
@@ -33,7 +37,13 @@ module Garager
     end
 
     def logger
-      @logger ||= options.fetch(:logger) { Logger.new(STDOUT) }
+      @logger ||= if path = options[:log]
+        Logger.new(path)
+      elsif options[:logger]
+        options[:logger]
+      else
+        Logger.new(STDOUT)
+      end
     end
 
     def name
