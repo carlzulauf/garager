@@ -9,7 +9,7 @@ init_script_name = "garage_init"
 init_script_path = File.join(bin_dir, init_script_name)
 
 def run(cmd)
-  puts cmd
+  puts "Executing: #{cmd}"
   `#{cmd}`
 end
 
