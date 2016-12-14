@@ -12,10 +12,10 @@
   * change keyboard layout from English (UK) to English (US)
 * Add the following to `/etc/wpa_supplicant/wpa_supplicant.conf`
 
-    network={
-        ssid="network-ssid-here"
-        psk="password-goes-here"
-    }
+        network={
+            ssid="network-ssid-here"
+            psk="password-goes-here"
+        }
 
 * `mkdir .ssh`
 * `scp /home/carl/.ssh/id_rsa.pub pi@192.168.1.11:.ssh/authorized_keys`
@@ -28,10 +28,10 @@
 
 * Mount drive and modify `/etc/wpa_supplicant/wpa_supplicant.conf`
 
-    network={
-      ssid="HeavyGhost"
-      psk="buttermilking"
-    }
+        network={
+            ssid="network-ssid-here"
+            psk="password-goes-here"
+        }
 
 * Modify `/etc/ssh/sshd_config` by uncommenting and changing
 
