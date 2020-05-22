@@ -1,12 +1,5 @@
 #!/usr/bin/env ruby
 
-require 'bundler/setup'
-Bundler.require(:default)
-
-require 'logger'
-
-require 'garager/garage'
-require 'garager/client'
-require 'garager/server'
+require_relative("../config/env.rb")
 
 Pry.start
