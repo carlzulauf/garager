@@ -1,9 +1,0 @@
-%h1 Garage Door
-
-%h3 Connected Devices
-%ul
-  - garage.devices.each do |key, device|
-    %li= "#{device.name} (key: #{key})"
-
-%form{action: "/open", method: "POST"}
-  %input{type: "submit", value: "Open Garage"}
