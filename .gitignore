@@ -1,3 +1,3 @@
 log/*.log
-config/client.yml
-config/server.yml
+config/development.yaml
+config/production.yaml
