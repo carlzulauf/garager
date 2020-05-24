@@ -1,14 +1,11 @@
 module Garager
-  class Garage
-    attr_accessor :pin, :presumed, :logger, :last, :triggers
-
-    def initialize(options = {})
-      self.pin      = options.fetch(:pin, 4)
-      self.presumed = options.fetch(:presumed, :closed)
-      self.logger   = options.fetch(:logger){ Logger.new(STDOUT) }
-      self.last     = 0.0
-      self.triggers = options.fetch(:triggers, [])
-    end
+  class Garage < OptStruct.new
+    option :pin, 0
+    option :presumed, :closed
+    option :logger, -> { Logger.new(STDOUT) }
+    option :last, 0.0
+    option :triggers, -> { [] }
+    option :capture_path, -> { default_capture_path } 
 
     def opened?
       !closed?
@@ -21,12 +18,39 @@ module Garager
     def action
       closed? ? "Open" : "Close"
     end
+    
+    def run(cmd)
+      logger.info " $ #{cmd}"
+      system cmd
+    end
 
     def setup
       logger.info "Garage#setup"
-      gpio "write #{pin} 1"
-      gpio "mode #{pin} out"
+      run "gpio write #{pin} 1"
+      run "gpio mode #{pin} output"
       self
+    end
+    
+    def capture
+      logger.info "Garage#capture"
+      run capture_cmd
+      triggers.push([:status_image, :camera, capture_path])
+    end
+    
+    def capture_cmd
+      [
+        "raspistill",
+        "--width 640",
+        "--height 480",
+        "--nopreview",
+        "--timeout 2000",
+        "--quality 95",
+        "--output #{capture_path}",
+      ].join(" ")
+    end
+    
+    def default_capture_path
+      File.join(ROOT_DIR, "capture.jpg")
     end
 
     def max_frequency
@@ -37,10 +61,10 @@ module Garager
       ts = Time.now.to_f
       if ts - last > max_frequency
         logger.info "Garage#toggle. Presumed #{presumed}"
-        gpio "write #{pin} 0"
+        run "gpio write #{pin} 0"
         sleep 0.5
-        gpio "write #{pin} 1"
-        self.presumed = presumed == :closed ? :open : :closed
+        run "gpio write #{pin} 1"
+        self.presumed = closed? ? :open : :closed
         self.last = ts
         self
       else
@@ -48,12 +72,8 @@ module Garager
       end
     end
 
-    def gpio(cmd)
-      `/usr/local/bin/gpio #{cmd}`
-    end
-
     def self.current(options = {})
-      @@current ||= if defined?(REAL_GARAGE) && REAL_GARAGE
+      @@current ||= if GARAGER_ENV == "production"
                       Garage.new(options).setup
                     else
                       FakeGarage.new(options).setup
