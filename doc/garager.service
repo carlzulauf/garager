@@ -7,8 +7,9 @@ After=network-online.target
 Type=simple
 
 User=pi
+EnvironmentFile=/home/pi/projects/garager/config/production.env
 WorkingDirectory=/home/pi/projects/garager
-ExecStart=/usr/local/bin/chruby-exec ruby-2.7.1 -- GARAGER_ENV=production bin/client
+ExecStart=/home/pi/projects/garager/bin/client
 
 Restart=always
 
