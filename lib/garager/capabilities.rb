@@ -7,11 +7,10 @@ module Garager
     def standard_garage
       [
         action(:toggle, desc: "Open garage if closed. Close it if open."),
-        status_image(:camera, desc: "Most recent image from the garage controller's camera."),
         status(:presumed_state, desc: "Best guess about whether garage is open or closed.", default: "closed"),
+        status_image(:camera, desc: "Most recent image from the garage controller's camera."),
         # action(:set_open, desc: "If the garage is really open but this software says it's closed, press this."),
         # action(:set_closed, desc: "If the garage is really closed but this software says it's open, press this."),
-        status_image(:visual_state, desc: "Last captured image from garage controller."),
       ]
     end
 
