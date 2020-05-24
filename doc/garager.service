@@ -8,7 +8,7 @@ Type=simple
 
 User=pi
 WorkingDirectory=/home/pi/projects/garager
-ExecStart=/usr/local/bin/chruby-exec ruby-2.7.1 -- bin/client
+ExecStart=/usr/local/bin/chruby-exec ruby-2.7.1 -- GARAGER_ENV=production bin/client
 
 Restart=always
 
