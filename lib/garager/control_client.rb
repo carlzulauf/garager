@@ -10,17 +10,15 @@ module Garager
       end
     end
 
-    config_option :id, config_name: "device_id"
-    config_option :websocket_scheme, default: "ws"
-    config_option :http_scheme, default: "http"
-    config_option :host, config_name: "websocket_host"
-    config_option :path, config_name: "websocket_path"
+    config_option :device_id
+    config_option :server_uri
+    config_option :public_key
+    config_option :private_key
 
     options(
-      private_key:      -> { config_private_key },
-      pong_interval:    10,
+      pong_interval:    15,
       seen_timeout:     -> { pong_interval * 2 },
-      flagging_timeout: 30,
+      flagging_timeout: -> { pong_interval * 3 },
       reconnect_delays: -> { default_reconnect_delays },
       channel:          "DevicesChannel",
       agent:            "garager 2.0.0",
@@ -31,6 +29,7 @@ module Garager
 
     init do
       @connected = false
+      @status_counter = 0
     end
 
     def start
@@ -76,14 +75,36 @@ module Garager
       end
     end
 
-    def add_to_output_stream(name, chunk)
+    def update_status_image(name, path)
       EM.next_tick do
-        update = { action: "add_to_output_stream", name: name, chunk: chunk }.to_json
+        data = Base64.encode64(File.read(path))
+        update = {
+          action: "update_status_image",
+          name:   name,
+          image:  data,
+          ext:    Pathname(path).extname.from(1),
+        }.to_json
         send_message(command: "message", data: update, identifier: channel_id)
       end
     end
 
     private
+
+    def server_uri_object
+      @server_uri_object ||= URI(server_uri)
+    end
+
+    def host
+      server_uri_object.host
+    end
+
+    def http_scheme
+      server_uri_object.scheme == "wss" ? "https" : "http"
+    end
+
+    def port
+      server_uri_object.port
+    end
 
     def handle_message(event)
       puts "Received message: #{event.data}"
@@ -93,7 +114,7 @@ module Garager
         send_message(subscription_message)
       when "confirm_subscription"
         send_message(registration_message)
-        EM.add_periodic_timer(pong_interval) { send_message(pong_message) }
+        # EM.add_periodic_timer(pong_interval / 2.0) { send_status }
       else
         if message["identifier"] == channel_id && message.key?("message")
           handle_trigger(message["message"])
@@ -110,7 +131,7 @@ module Garager
 
     def trigger_action(action, param)
       puts "Triggering #{action}: #{param.inspect}"
-      triggers.push([action, param])
+      triggers.push([action, param].compact)
     end
 
     def close_client(event)
@@ -121,11 +142,13 @@ module Garager
     end
 
     def open_websocket_client
+      origin = "#{http_scheme}://#{host}"
+      origin += ":#{port}" if port
       Faye::WebSocket::Client.new(
-        "#{websocket_scheme}://#{host}#{path}",
+        server_uri,
         [],
         headers: {
-          "Origin" => "#{http_scheme}://#{host}",
+          "Origin" => origin,
           "Authorization" => "Bearer #{jwt_token}"
         }
       )
@@ -137,7 +160,7 @@ module Garager
     end
 
     def default_reconnect_delays
-      [ 0, 1, 2, 5, 10, 15, 20, 30 ]
+      [ 0.1, 1, 2, 5, 10, 15, 20, 30 ]
     end
 
     def channel_id
@@ -155,7 +178,7 @@ module Garager
     def registration_data
       {
         action:         "register",
-        capabilities:   Capabilities.all,
+        capabilities:   Capabilities.standard_garage,
         pong_interval:  pong_interval,
         seen_timeout:   seen_timeout
       }.to_json
@@ -171,23 +194,20 @@ module Garager
 
     def send_message(data)
       message = data.to_json
-      puts "Sending: #{message}"
+      puts "Sending: #{message.length > 200 ? message.first(200) + " ... " : message}"
       socket.send message
     end
 
     def jwt_token
-      @jwt_token ||= JWT.encode(jwt_payload, private_key, "RS256")
+      @jwt_token ||= JWT.encode(jwt_payload, private_key_object, "RS256")
     end
 
     def jwt_payload
-      {
-        sub:    "minecraft_server",
-        agent:  agent,
-      }
+      { sub: device_id, agent: agent }
     end
 
-    def config_private_key
-      OpenSSL::PKey::RSA.new CONFIG["device_private_key"]
+    def private_key_object
+      OpenSSL::PKey::RSA.new(private_key)
     end
   end
 end

@@ -1,12 +1,13 @@
 module Garager
   class Garage
-    attr_accessor :pin, :presumed, :logger, :last
+    attr_accessor :pin, :presumed, :logger, :last, :triggers
 
     def initialize(options = {})
       self.pin      = options.fetch(:pin, 4)
       self.presumed = options.fetch(:presumed, :closed)
       self.logger   = options.fetch(:logger){ Logger.new(STDOUT) }
       self.last     = 0.0
+      self.triggers = options.fetch(:triggers, [])
     end
 
     def opened?
@@ -63,12 +64,14 @@ module Garager
   class FakeGarage < Garage
     def setup
       logger.info "FakeGarage#setup"
+      triggers.push([:status, :presumed_state, presumed])
       self
     end
 
     def toggle
       logger.info "FakeGarage#toggle. Presumed #{presumed}"
       self.presumed = presumed == :closed ? :open : :closed
+      triggers.push([:status, :presumed_state, presumed])
       self
     end
   end
