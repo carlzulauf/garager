@@ -1,11 +1,14 @@
 module Garager
   class Garage < OptStruct.new
-    option :pin, 0
-    option :presumed, :closed
-    option :logger, -> { Logger.new(STDOUT) }
-    option :last, 0.0
-    option :triggers, -> { [] }
-    option :capture_path, -> { default_capture_path } 
+    options(
+      pin:            0,
+      last:           0.0,
+      max_frequency:  3.0, # seconds
+      presumed:       :closed,
+      logger:         -> { Logger.new(STDOUT) },
+      triggers:       -> { [] },
+      capture_path:   -> { default_capture_path }
+    )
 
     def opened?
       !closed?
@@ -18,7 +21,7 @@ module Garager
     def action
       closed? ? "Open" : "Close"
     end
-    
+
     def run(cmd)
       logger.info " $ #{cmd}"
       system cmd
@@ -28,15 +31,16 @@ module Garager
       logger.info "Garage#setup"
       run "gpio write #{pin} 1"
       run "gpio mode #{pin} output"
-      self
+      triggers.push([:status, :presumed_state, presumed])
+      triggers.push([:status_image, :camera, capture])
     end
-    
+
     def capture
       logger.info "Garage#capture"
       run capture_cmd
-      triggers.push([:status_image, :camera, capture_path])
+      capture_path
     end
-    
+
     def capture_cmd
       [
         "raspistill",
@@ -48,35 +52,32 @@ module Garager
         "--output #{capture_path}",
       ].join(" ")
     end
-    
+
     def default_capture_path
       File.join(ROOT_DIR, "capture.jpg")
-    end
-
-    def max_frequency
-      3.0 # seconds
     end
 
     def toggle
       ts = Time.now.to_f
       if ts - last > max_frequency
-        logger.info "Garage#toggle. Presumed #{presumed}"
+        to = closed? ? :open : :closed
+        logger.info "Garage#toggle. Transitioning from #{presumed} to #{to}"
         run "gpio write #{pin} 0"
         sleep 0.5
         run "gpio write #{pin} 1"
-        self.presumed = closed? ? :open : :closed
+        self.presumed = to
         self.last = ts
-        self
       else
         logger.info "Garage#toggle. Throttled."
       end
+      presumed
     end
 
     def self.current(options = {})
       @@current ||= if GARAGER_ENV == "production"
-                      Garage.new(options).setup
+                      Garage.new(options)
                     else
-                      FakeGarage.new(options).setup
+                      FakeGarage.new(options)
                     end
     end
   end
@@ -85,14 +86,18 @@ module Garager
     def setup
       logger.info "FakeGarage#setup"
       triggers.push([:status, :presumed_state, presumed])
-      self
+      triggers.push([:status_image, :camera, capture])
     end
 
     def toggle
       logger.info "FakeGarage#toggle. Presumed #{presumed}"
-      self.presumed = presumed == :closed ? :open : :closed
-      triggers.push([:status, :presumed_state, presumed])
-      self
+      self.presumed = closed? ? :open : :closed
+    end
+
+    def capture
+      logger.info "FakeGarage#capture"
+      FileUtils.cp "/home/carl/Pictures/keeper-head.jpg", capture_path
+      capture_path
     end
   end
 end

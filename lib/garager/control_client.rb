@@ -22,17 +22,20 @@ module Garager
       reconnect_delays: -> { default_reconnect_delays },
       channel:          "DevicesChannel",
       agent:            "garager 2.0.0",
-      triggers:         -> { [] }
+      triggers:         -> { [] },
+      logger:           -> { Logger.new(STDOUT) }
     )
 
     attr_reader :socket
 
     init do
+      log "#init"
       @connected = false
       @status_counter = 0
     end
 
     def start
+      log "#start"
       @running = true
       reconnects = 0
       while @running
@@ -45,14 +48,14 @@ module Garager
             reconnects += 1
           end
           delay = reconnect_delay(reconnects)
-          puts "Sleeping for #{delay} seconds before attempting reconnect"
+          log "Sleeping for #{delay} seconds before attempting reconnect"
           sleep delay
         end
       end
     end
 
     def stop
-      puts "Attempting to disconnect control client"
+      log "Attempting to disconnect control client", "stop"
       EM.next_tick do
         @running = false
         socket&.close
@@ -60,6 +63,7 @@ module Garager
     end
 
     def run
+      log "#run"
       EM.run do
         @socket = open_websocket_client
         socket.on(:open)    { @connected = true }
@@ -90,6 +94,10 @@ module Garager
 
     private
 
+    def log(msg, context = nil)
+      logger.info "ControlClient#{context ? "##{context}" : ""}: #{msg}"
+    end
+
     def server_uri_object
       @server_uri_object ||= URI(server_uri)
     end
@@ -107,7 +115,7 @@ module Garager
     end
 
     def handle_message(event)
-      puts "Received message: #{event.data}"
+      log "Received message: #{event.data}", "handle_message"
       message = JSON.parse(event.data)
       case message["type"]
       when "welcome"
@@ -130,12 +138,12 @@ module Garager
     end
 
     def trigger_action(action, param)
-      puts "Triggering #{action}: #{param.inspect}"
+      log "Triggering #{action}: #{param.inspect}", "trigger_action"
       triggers.push([action, param].compact)
     end
 
     def close_client(event)
-      puts "Connection closed. Code: #{event.code}. Reason: #{event.reason}."
+      log "Connection closed. Code: #{event.code}. Reason: #{event.reason}."
       @connected = false
       @socket = nil
       EM.stop_event_loop
@@ -144,6 +152,7 @@ module Garager
     def open_websocket_client
       origin = "#{http_scheme}://#{host}"
       origin += ":#{port}" if port
+      log "connecting to #{server_uri} from #{origin}", "open_websocket_client"
       Faye::WebSocket::Client.new(
         server_uri,
         [],
@@ -194,7 +203,7 @@ module Garager
 
     def send_message(data)
       message = data.to_json
-      puts "Sending: #{message.length > 200 ? message.first(200) + " ... " : message}"
+      log message.length > 200 ? message.first(200) + " ... " : message, "send_message"
       socket.send message
     end
 

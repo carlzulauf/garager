@@ -1,12 +1,12 @@
-class Garager::TriggerServer < OptStruct.new
-  option :garage, -> { Garager::FakeGarage.new }
+class Garager::TriggerClient < OptStruct.new
+  option :logger, -> { Logger.new(STDOUT) }
   option :image_interval, 30 # seconds
-  attr_reader :control_client, :triggers
+  attr_reader :control_client, :triggers, :garage
 
   init do
     @triggers = Queue.new
-    @control_client = Garager::ControlClient.new(triggers: @triggers)
-    garage.triggers = triggers
+    @control_client = Garager::ControlClient.new(triggers: @triggers, logger: logger)
+    @garage = Garager::Garage.current(triggers: @triggers, logger: logger)
   end
 
   def run
@@ -30,7 +30,7 @@ class Garager::TriggerServer < OptStruct.new
   end
 
   def update_camera
-    status_image(:camera, "/home/carl/Pictures/keeper-head.jpg")
+    status_image(:camera, garage.capture)
     @last_image_at = Time.now
   end
 
@@ -50,18 +50,12 @@ class Garager::TriggerServer < OptStruct.new
     control_client.update_status_image(name, path)
   end
 
-  def setup
-    garage.setup
-  end
-
   def toggle
-    garage.toggle
-    update_presumed_state
-    sleep 1
-    puts "Updating camera for start of garage action"
+    status(:presumed_state, garage.toggle)
+    info "Updating camera for start of garage action"
     update_camera
     sleep 10
-    puts "Updating camera to show completed garage action"
+    info "Updating camera to show completed garage action"
     update_camera
   end
 
@@ -73,10 +67,16 @@ class Garager::TriggerServer < OptStruct.new
 
   def start
     control_connect
+    sleep 2
+    garage.setup
   end
 
   def control_connect
     return if @control_thread && @control_thread.alive?
     @control_thread = Thread.new { control_client.start }
+  end
+
+  def info(msg)
+    logger.info "TriggerClient: #{msg}"
   end
 end

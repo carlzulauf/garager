@@ -14,6 +14,7 @@ CONFIG_DIR  = File.expand_path(File.dirname(__FILE__))
 CONFIG_PATH = File.join(CONFIG_DIR, "#{GARAGER_ENV}.yaml")
 ROOT_DIR    = File.expand_path(File.join(CONFIG_DIR, ".."))
 LIB_DIR     = File.join(ROOT_DIR, "lib")
+LOGGER      = Logger.new(STDOUT)
 
 $LOAD_PATH.unshift LIB_DIR
 require "garager"
@@ -21,4 +22,4 @@ require "garager"
 Garager::ConfigBuilder.out(GARAGER_ENV) unless File.exist?(CONFIG_PATH)
 CONFIG_DATA = YAML.load_file(CONFIG_PATH)
 
-puts "Starting with config:", CONFIG_DATA.inspect
+LOGGER.info "Starting with config: " + CONFIG_DATA.inspect

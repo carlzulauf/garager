@@ -1,34 +1,9 @@
 #!/usr/bin/env ruby
+require_relative "../config/env.rb"
 
-Dir.chdir File.join(File.expand_path(File.dirname(__FILE__)), "..")
+trigger_client = Garager::TriggerClient.new(logger: LOGGER)
 
-require 'bundler/setup'
-Bundler.require(:default)
+interrupt = proc { trigger_client.trigger_stop }
+%w[TERM QUIT HUP INT].each { |sig| Signal.trap(sig, interrupt) }
 
-REAL_GARAGE = !!(`uname -a` =~ /armv6l/)
-
-require 'logger'
-require 'yaml'
-
-require 'garager/garage'
-require 'garager/client'
-
-config_template = {
-  uri: "druby://example.com:8787",
-  key: "PUT-A-UNIQUE-KEY-HERE"
-}
-config_path = "config/client.yml"
-
-unless File.exist?(config_path)
-  File.write(config_path, config_template.to_yaml)
-  puts <<-ERROR
-MISSING REQUIRED FILE #{config_path}
-Creating file for you from template.
-Please edit this file with your device's key for your server.
-  ERROR
-  exit
-end
-
-config = YAML.load_file(config_path)
-
-Garager::Client.new(config).listen
+trigger_client.run
