@@ -7,6 +7,8 @@ require "yaml"
 require "bundler/setup"
 Bundler.require(:default)
 
+require "active_support/core_ext"
+
 GARAGER_ENV = ENV["GARAGER_ENV"] || "development"
 CONFIG_DIR  = File.expand_path(File.dirname(__FILE__))
 CONFIG_PATH = File.join(CONFIG_DIR, "#{GARAGER_ENV}.yaml")
