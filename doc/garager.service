@@ -1,0 +1,13 @@
+[Unit]
+Description=Garager
+After=network-online.target
+
+[Service]
+# Foreground process (do not use --daemon in ExecStart or config.rb)
+Type=simple
+
+User=pi
+WorkingDirectory=/home/pi/projects/garager
+ExecStart=/usr/local/bin/chruby-exec ruby-2.7.1 -- bin/client
+
+Restart=always
