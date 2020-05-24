@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+require_relative "../config/env.rb"
+
+trigger_server = Garager::TriggerServer.new
+
+interrupt = proc { trigger_server.trigger_stop }
+%w[TERM QUIT HUP INT].each { |sig| Signal.trap(sig, interrupt) }
+
+trigger_server.run
