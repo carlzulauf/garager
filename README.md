@@ -67,3 +67,10 @@ $ sudo service motion start
 ```
 
 ### Install garager
+
+```
+git clone https://github.com/carlzulauf/garager.git
+cd garager
+gem install bundler
+bundle install
+```
