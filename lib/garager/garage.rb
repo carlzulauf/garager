@@ -7,7 +7,6 @@ module Garager
       presumed:       :closed,
       logger:         -> { Logger.new(STDOUT) },
       triggers:       -> { [] },
-      capture_path:   -> { default_capture_path }
     )
 
     def opened?
@@ -36,25 +35,7 @@ module Garager
     end
 
     def capture
-      logger.info "Garage#capture"
-      run capture_cmd
-      capture_path
-    end
-
-    def capture_cmd
-      [
-        "raspistill",
-        "--width 640",
-        "--height 480",
-        "--nopreview",
-        "--timeout 2000",
-        "--quality 95",
-        "--output #{capture_path}",
-      ].join(" ")
-    end
-
-    def default_capture_path
-      File.join(ROOT_DIR, "capture.jpg")
+      CONFIG_DATA.fetch("capture_path")
     end
 
     def toggle
@@ -92,12 +73,6 @@ module Garager
     def toggle
       logger.info "FakeGarage#toggle. Presumed #{presumed}"
       self.presumed = closed? ? :open : :closed
-    end
-
-    def capture
-      logger.info "FakeGarage#capture"
-      FileUtils.cp "/home/carl/Pictures/keeper-head.jpg", capture_path
-      capture_path
     end
   end
 end
