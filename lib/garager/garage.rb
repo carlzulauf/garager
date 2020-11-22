@@ -35,7 +35,8 @@ module Garager
     end
 
     def capture
-      CONFIG_DATA.fetch("capture_path")
+      path = CONFIG_DATA.fetch("capture_path")
+      File.exist?(path) ? path : File.join(ROOT_DIR, "doc", "test.jpg")
     end
 
     def toggle
