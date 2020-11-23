@@ -7,9 +7,11 @@ module Garager
     def standard_garage
       [
         action(:toggle, desc: "Open garage if closed. Close it if open."),
-        status(:presumed_state, desc: "Best guess about whether garage is open or closed.", default: "closed"),
         status_image(:camera, desc: "Most recent image from the garage controller's camera."),
+        status(:presumed_state, desc: "Best guess about whether garage is open or closed.", default: "closed"),
         action(:update_camera, desc: "Refresh status image right now"),
+        action(:air_out, desc: "Open the garage for 5 minutes, then close it"),
+        action(:delayed_toggle, desc: "Close (or Open) the garage after the specified number of minutes", default: "5", type: "action_with_param"),
         # action(:set_open, desc: "If the garage is really open but this software says it's closed, press this."),
         # action(:set_closed, desc: "If the garage is really closed but this software says it's open, press this."),
       ]
@@ -17,8 +19,8 @@ module Garager
 
     private
 
-    def action(name, desc:)
-      { type: "action", name: name, description: desc }
+    def action(name, desc:, **extra)
+      { type: "action", name: name, description: desc }.merge(extra)
     end
 
     def output_stream(name, desc: nil)

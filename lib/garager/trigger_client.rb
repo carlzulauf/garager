@@ -1,7 +1,7 @@
 class Garager::TriggerClient < OptStruct.new
   option :logger, -> { Logger.new(STDOUT) }
   option :image_interval, 30 # seconds
-  attr_reader :control_client, :triggers, :garage
+  attr_reader :control_client, :triggers, :garage, :timer
 
   init do
     @triggers = Queue.new
@@ -69,6 +69,30 @@ class Garager::TriggerClient < OptStruct.new
     control_connect
     sleep 2
     garage.setup
+  end
+
+  def air_out
+    toggle
+    trigger_toggle_in(300)
+  end
+
+  def delayed_toggle(minutes_str)
+    minutes = minutes_str.to_f
+    trigger_toggle_in(minutes * 60) if minutes.positive?
+  end
+
+  private
+
+  def trigger_toggle_in(seconds)
+    if @timer && @timer.alive?
+      info "Unable to schedule toggle. Timer already running."
+    else
+      info "Triggering toggle in #{seconds} seconds"
+      @timer = Thread.new do
+        sleep seconds
+        @triggers.push([:toggle])
+      end
+    end
   end
 
   def control_connect
