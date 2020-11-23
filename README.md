@@ -74,3 +74,9 @@ cd garager
 gem install bundler
 bundle install
 ```
+
+Copy the garager service (`doc/garager.service`) to `/etc/systemd/system/garager.service` and then enable the service:
+
+```
+sudo systemctl enable garager
+```
