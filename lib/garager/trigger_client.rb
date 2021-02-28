@@ -1,6 +1,7 @@
 class Garager::TriggerClient < OptStruct.new
   option :logger, -> { Logger.new(STDOUT) }
   option :image_interval, 30 # seconds
+  option :status_interval, 30 # seconds
   attr_reader :control_client, :triggers, :garage, :timer
 
   init do
@@ -12,6 +13,7 @@ class Garager::TriggerClient < OptStruct.new
   def run
     @running = true
     @last_image_at = Time.now - image_interval
+    @last_status_at = Time.now - status_interval
     start
     while @running
       begin
@@ -20,11 +22,8 @@ class Garager::TriggerClient < OptStruct.new
         end
         public_send(name, *params)
       rescue Timeout::Error
-        if @last_image_at + image_interval < Time.now
-          update_camera
-        else
-          update_presumed_state
-        end
+        update_camera if @last_image_at + image_interval < Time.now
+        update_presumed_state if @last_status_at + status_interval < Time.now
       end
     end
   end
@@ -36,6 +35,7 @@ class Garager::TriggerClient < OptStruct.new
 
   def update_presumed_state
     status(:presumed_state, garage.presumed)
+    @last_status_at = Time.now
   end
 
   def trigger_stop
