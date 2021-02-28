@@ -15,7 +15,7 @@ class Garager::TriggerClient < OptStruct.new
     start
     while @running
       begin
-        name, *params = Timeout.timeout(control_client.pong_interval / 2.0) do
+        name, *params = Timeout.timeout(1.0) do
           name, *params = @triggers.pop
         end
         public_send(name, *params)
@@ -54,9 +54,15 @@ class Garager::TriggerClient < OptStruct.new
     status(:presumed_state, garage.toggle)
     info "Updating camera for start of garage action"
     update_camera
-    sleep 10
-    info "Updating camera to show completed garage action"
-    update_camera
+    unless @camera_timer and @camera_timer.alive?
+      @camera_timer = Thread.new do
+        sleep 10
+        if Time.now - @last_image_at > 10
+          info "Updating camera to show completed garage action"
+          update_camera
+        end
+      end
+    end
   end
 
   def stop

@@ -3,7 +3,7 @@ module Garager
     options(
       pin:            0,
       last:           0.0,
-      max_frequency:  3.0, # seconds
+      max_frequency:  5.0, # seconds
       presumed:       :closed,
       logger:         -> { Logger.new(STDOUT) },
       triggers:       -> { [] },
