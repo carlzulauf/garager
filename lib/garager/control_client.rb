@@ -95,7 +95,7 @@ module Garager
     private
 
     def log(msg, context = nil)
-      logger.info "ControlClient#{context ? "##{context}" : ""}: #{msg}"
+      logger.info "ControlClient#{context ? "##{context}" : ""} [#{@connected.inspect}]: #{msg}"
     end
 
     def server_uri_object
