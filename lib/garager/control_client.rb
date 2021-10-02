@@ -69,6 +69,7 @@ module Garager
         socket.on(:open)    { @connected = true }
         socket.on(:message) { |event| handle_message(event) }
         socket.on(:close)   { |event| close_client(event) }
+        socket.on(:error)   { |event| log event.inspect, "on(:error)"}
       end
     end
 
@@ -143,7 +144,7 @@ module Garager
     end
 
     def close_client(event)
-      log "Connection closed. Code: #{event.code}. Reason: #{event.reason}."
+      log "Connection closed. Code: #{event.code}. Reason: #{event.reason}. (#{event.inspect})", "close_client"
       @connected = false
       @socket = nil
       EM.stop_event_loop
