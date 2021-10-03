@@ -157,7 +157,7 @@ module Garager
       Faye::WebSocket::Client.new(
         server_uri,
         [],
-        tls: { verify_peer: false }
+        tls: { verify_peer: false },
         headers: {
           "Origin" => origin,
           "Authorization" => "Bearer #{jwt_token}"
