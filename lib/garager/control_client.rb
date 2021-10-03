@@ -160,7 +160,8 @@ module Garager
         headers: {
           "Origin" => origin,
           "Authorization" => "Bearer #{jwt_token}"
-        }
+        },
+        tls: { verify_peer: true }
       )
     end
 
