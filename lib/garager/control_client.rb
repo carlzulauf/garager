@@ -144,6 +144,7 @@ module Garager
 
     def close_client(event)
       log "Connection closed. Code: #{event.code}. Reason: #{event.reason}."
+      log event.inspect
       @connected = false
       @socket = nil
       EM.stop_event_loop
@@ -159,7 +160,8 @@ module Garager
         headers: {
           "Origin" => origin,
           "Authorization" => "Bearer #{jwt_token}"
-        }
+        },
+        tls: { verify_peer: false }
       )
     end
 
