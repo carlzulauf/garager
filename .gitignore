@@ -1,4 +1,4 @@
-log/*.log
+log/*
 config/development.yaml
 config/production.yaml
 capture.jpg
