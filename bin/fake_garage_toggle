@@ -1,0 +1,5 @@
+#!/usr/bin/env python
+
+# Dummy script used by Garager::FakeGarage to confirm script execution works
+
+print("fake_garage_toggle")

@@ -6,10 +6,10 @@ After=network-online.target
 # Foreground process (do not use --daemon in ExecStart or config.rb)
 Type=simple
 
-User=pi
-EnvironmentFile=/home/pi/projects/garager/config/production.env
-WorkingDirectory=/home/pi/projects/garager
-ExecStart=/home/pi/projects/garager/bin/client
+User=carl
+EnvironmentFile=/home/carl/projects/garager/config/production.env
+WorkingDirectory=/home/carl/projects/garager
+ExecStart=/home/carl/projects/garager/bin/client
 
 Restart=always
 

@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+
+# Python integration script to actually control the GPIO pins and toggle garage door
+
+import RPi.GPIO as GPIO
+import time
+
+# use the actual pin numbers
+GPIO.setmode(GPIO.BOARD)
+
+# PIN 11, BCM GPIO 17
+# must start in an ON state to keep relay open
+GPIO.setup(11, GPIO.OUT, initial=GPIO.HIGH)
+
+# trigger the garage door by closing the relay and shorting the pins for half a second
+GPIO.output(11, GPIO.LOW)
+time.sleep(0.5)
+GPIO.output(11, GPIO.HIGH)
+
+GPIO.cleanup()
