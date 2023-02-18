@@ -29,13 +29,13 @@ module Garager
     attr_reader :socket
 
     init do
-      log "#init"
+      debug "#init"
       @connected = false
       @status_counter = 0
     end
 
     def start
-      log "#start"
+      debug "#start"
       @running = true
       reconnects = 0
       while @running
@@ -55,7 +55,7 @@ module Garager
     end
 
     def stop
-      log "Attempting to disconnect control client", "stop"
+      debug "Attempting to disconnect control client", "stop"
       EM.next_tick do
         @running = false
         socket&.close
@@ -63,7 +63,7 @@ module Garager
     end
 
     def run
-      log "#run"
+      debug "#run"
       EM.run do
         @socket = open_websocket_client
         socket.on(:open)    { @connected = true }
@@ -94,8 +94,12 @@ module Garager
 
     private
 
-    def log(msg, context = nil)
-      logger.info "ControlClient#{context ? "##{context}" : ""}: #{msg}"
+    def log(msg, context = nil, level: :info)
+      logger.send level, "ControlClient#{context ? "##{context}" : ""}: #{msg}"
+    end
+
+    def debug(msg, context = nil)
+      log(msg, context, level: :debug)
     end
 
     def server_uri_object
@@ -115,7 +119,7 @@ module Garager
     end
 
     def handle_message(event)
-      log "Received message: #{event.data}", "handle_message"
+      debug "Received message: #{event.data}", "handle_message"
       message = JSON.parse(event.data)
       case message["type"]
       when "welcome"
@@ -144,7 +148,7 @@ module Garager
 
     def close_client(event)
       log "Connection closed. Code: #{event.code}. Reason: #{event.reason}."
-      log event.inspect
+      debug event.inspect
       @connected = false
       @socket = nil
       EM.stop_event_loop
@@ -205,7 +209,7 @@ module Garager
 
     def send_message(data)
       message = data.to_json
-      log message.length > 200 ? message.first(200) + " ... " : message, "send_message"
+      debug message.length > 200 ? message.first(200) + " ... " : message, "send_message"
       socket.send message
     end
 
