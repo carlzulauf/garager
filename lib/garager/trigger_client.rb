@@ -29,6 +29,7 @@ class Garager::TriggerClient < OptStruct.new
   end
 
   def update_camera
+    return if @last_image_at && garage.test_image?
     status_image(:camera, garage.capture)
     @last_image_at = Time.now
   end
