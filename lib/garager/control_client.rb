@@ -8,7 +8,9 @@ module Garager
       option_writer(name)
       define_method(name) do
         options.fetch(name) do
-          CONFIG_DATA.fetch(config_name, default)
+          ENV.fetch("GARAGER_#{config_name.upcase}") do
+            CONFIG_DATA.fetch(config_name, default)
+          end
         end
       end
     end

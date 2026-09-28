@@ -38,7 +38,7 @@ module Garager
     end
 
     def capture
-      path = CONFIG_DATA["capture_path"]
+      path = ENV["GARAGER_CAPTURE_PATH"] || CONFIG_DATA["capture_path"]
       path && File.exist?(path) ? path : test_image
     end
 

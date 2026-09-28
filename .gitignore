@@ -3,3 +3,5 @@ config/development.yaml
 config/production.yaml
 capture.jpg
 /.direnv
+config/pi.json
+result*

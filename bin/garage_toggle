@@ -1,20 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env bash
 
-# Python integration script to actually control the GPIO pins and toggle garage door
+# Toggles the garage door by pulsing the relay attached to a GPIO line.
+#
+# Requires libgpiod v2 (`gpioset`). The line defaults to GPIO17 (physical pin 11)
+# and can be changed with GARAGER_GPIO_LINE.
+#
+# The relay is active-low: pull the line low for half a second to short the
+# garage door opener's terminals, then drive it high again and release it.
 
-import RPi.GPIO as GPIO
-import time
+set -euo pipefail
 
-# use the actual pin numbers
-GPIO.setmode(GPIO.BOARD)
-
-# PIN 11, BCM GPIO 17
-# must start in an ON state to keep relay open
-GPIO.setup(11, GPIO.OUT, initial=GPIO.HIGH)
-
-# trigger the garage door by closing the relay and shorting the pins for half a second
-GPIO.output(11, GPIO.LOW)
-time.sleep(0.5)
-GPIO.output(11, GPIO.HIGH)
-
-GPIO.cleanup()
+exec gpioset --consumer garager --toggle 500ms,0 "${GARAGER_GPIO_LINE:-GPIO17}=0"
