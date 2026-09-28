@@ -16,12 +16,10 @@ class Garager::TriggerClient < OptStruct.new
     @last_status_at = Time.now - status_interval
     start
     while @running
-      begin
-        name, *params = Timeout.timeout(1.0) do
-          name, *params = @triggers.pop
-        end
+      name, *params = @triggers.pop(timeout: 1.0)
+      if name
         public_send(name, *params)
-      rescue Timeout::Error
+      else
         update_camera if @last_image_at + image_interval < Time.now
         update_presumed_state if @last_status_at + status_interval < Time.now
       end

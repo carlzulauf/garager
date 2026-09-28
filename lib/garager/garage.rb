@@ -64,11 +64,11 @@ module Garager
       presumed
     end
 
-    def self.current(options = {})
+    def self.current(**options)
       @@current ||= if GARAGER_ENV == "production"
-                      Garage.new(options)
+                      Garage.new(**options)
                     else
-                      FakeGarage.new(options)
+                      FakeGarage.new(**options)
                     end
     end
   end
@@ -87,6 +87,7 @@ module Garager
       run command
       self.presumed = closed? ? :open : :closed
       self.last = Time.now.to_f
+      presumed
     end
   end
 end

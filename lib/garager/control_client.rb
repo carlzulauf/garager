@@ -1,3 +1,6 @@
+require "async/websocket/client"
+require "async/http/endpoint"
+
 module Garager
   class ControlClient < OptStruct.new
     def self.config_option(name, config_name: nil, default: nil)
@@ -31,7 +34,8 @@ module Garager
     init do
       debug "#init"
       @connected = false
-      @status_counter = 0
+      @outbox = nil
+      @stop_signal = Thread::Queue.new
     end
 
     def start
@@ -49,47 +53,70 @@ module Garager
           end
           delay = reconnect_delay(reconnects)
           log "Sleeping for #{delay} seconds before attempting reconnect"
-          sleep delay
+          @stop_signal.pop(timeout: delay)
         end
       end
     end
 
+    def connected?
+      @connected
+    end
+
+    # Safe to call from any thread
     def stop
       debug "Attempting to disconnect control client", "stop"
-      EM.next_tick do
-        @running = false
-        socket&.close
-      end
+      @running = false
+      @stop_signal.push(:stop)
+      @outbox&.push(:close)
     end
 
     def run
       debug "#run"
-      EM.run do
-        @socket = open_websocket_client
-        socket.on(:open)    { @connected = true }
-        socket.on(:message) { |event| handle_message(event) }
-        socket.on(:close)   { |event| close_client(event) }
+      Sync do |task|
+        log "connecting to #{server_uri} from #{origin}", "run"
+        Async::WebSocket::Client.connect(endpoint, headers: connection_headers) do |connection|
+          @socket = connection
+          @outbox = Thread::Queue.new
+          @connected = true
+          writer = task.async { write_loop(connection) }
+          while (message = connection.read)
+            handle_message(message.to_str)
+          end
+          log "Connection closed by server"
+        ensure
+          @connected = false
+          @outbox&.close
+          @outbox = nil
+          writer&.stop
+          @socket = nil
+        end
       end
+    rescue Protocol::WebSocket::ClosedError => e
+      log "Connection closed. #{e.message}"
+    rescue IOError => e
+      raise if @running
+      log "Connection closed. #{e.message}"
+    rescue StandardError => e
+      log "Connection failed. #{e.class}: #{e.message}", level: :warn
+      debug e.full_message
     end
 
+    # Safe to call from any thread
     def update_status(name, value)
-      EM.next_tick do
-        update = { action: "update_status", name: name, value: value }.to_json
-        send_message(command: "message", data: update, identifier: channel_id)
-      end
+      update = { action: "update_status", name: name, value: value }.to_json
+      send_message(command: "message", data: update, identifier: channel_id)
     end
 
+    # Safe to call from any thread
     def update_status_image(name, path)
-      EM.next_tick do
-        data = Base64.encode64(File.read(path))
-        update = {
-          action: "update_status_image",
-          name:   name,
-          image:  data,
-          ext:    Pathname(path).extname.from(1),
-        }.to_json
-        send_message(command: "message", data: update, identifier: channel_id)
-      end
+      data = [File.binread(path)].pack("m")
+      update = {
+        action: "update_status_image",
+        name:   name,
+        image:  data,
+        ext:    File.extname(path).delete_prefix("."),
+      }.to_json
+      send_message(command: "message", data: update, identifier: channel_id)
     end
 
     private
@@ -118,15 +145,14 @@ module Garager
       server_uri_object.port
     end
 
-    def handle_message(event)
-      debug "Received message: #{event.data}", "handle_message"
-      message = JSON.parse(event.data)
+    def handle_message(data)
+      debug "Received message: #{data}", "handle_message"
+      message = JSON.parse(data)
       case message["type"]
       when "welcome"
         send_message(subscription_message)
       when "confirm_subscription"
         send_message(registration_message)
-        # EM.add_periodic_timer(pong_interval / 2.0) { send_status }
       else
         if message["identifier"] == channel_id && message.key?("message")
           handle_trigger(message["message"])
@@ -146,27 +172,44 @@ module Garager
       triggers.push([action, param].compact)
     end
 
-    def close_client(event)
-      log "Connection closed. Code: #{event.code}. Reason: #{event.reason}."
-      debug event.inspect
-      @connected = false
-      @socket = nil
-      EM.stop_event_loop
+    # All writes to the socket happen in this fiber, so other threads (and the
+    # reader fiber) only ever push onto the outbox queue.
+    def write_loop(connection)
+      while (message = @outbox&.pop)
+        if message == :close
+          connection.close
+          break
+        end
+        connection.write(Protocol::WebSocket::TextMessage.new(message))
+        connection.flush
+      end
     end
 
-    def open_websocket_client
-      origin = "#{http_scheme}://#{host}"
-      origin += ":#{port}" if port
-      log "connecting to #{server_uri} from #{origin}", "open_websocket_client"
-      Faye::WebSocket::Client.new(
+    def endpoint
+      Async::HTTP::Endpoint.parse(
         server_uri,
-        [],
-        headers: {
-          "Origin" => origin,
-          "Authorization" => "Bearer #{jwt_token}"
-        },
-        tls: { verify_peer: false }
+        protocol:    Async::HTTP::Protocol::HTTP11,
+        ssl_context: ssl_context
       )
+    end
+
+    # Matches the previous behavior of not verifying the server's certificate
+    def ssl_context
+      OpenSSL::SSL::SSLContext.new.tap do |context|
+        context.alpn_protocols = Async::HTTP::Protocol::HTTP11.names
+        context.set_params(verify_mode: OpenSSL::SSL::VERIFY_NONE)
+      end
+    end
+
+    def origin
+      "#{http_scheme}://#{host}:#{port}"
+    end
+
+    def connection_headers
+      {
+        "origin" => origin,
+        "authorization" => "Bearer #{jwt_token}"
+      }
     end
 
     def reconnect_delay(reconnects)
@@ -210,7 +253,14 @@ module Garager
     def send_message(data)
       message = data.to_json
       debug message.length > 200 ? message.first(200) + " ... " : message, "send_message"
-      socket.send message
+      outbox = @outbox
+      if outbox
+        outbox.push(message)
+      else
+        debug "Not connected. Dropping message.", "send_message"
+      end
+    rescue ClosedQueueError
+      debug "Connection closed. Dropping message.", "send_message"
     end
 
     def jwt_token
