@@ -72,7 +72,10 @@ class Garager::TriggerClient < OptStruct.new
 
   def start
     control_connect
-    sleep 2
+  end
+
+  # Sent by the control client each time it (re)registers with the server
+  def registered
     garage.setup
   end
 

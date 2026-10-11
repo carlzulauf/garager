@@ -11,4 +11,13 @@ RSpec.describe Garager::ControlClient do
       expect(subject).not_to be_connected
     end
   end
+
+  describe "subscription confirmation" do
+    it "registers, then triggers a status resend" do
+      expect(subject).to receive(:send_message)
+        .with(hash_including(command: "message", data: include('"action":"register"')))
+      subject.send(:handle_message, { type: "confirm_subscription" }.to_json)
+      expect(triggers).to eq([[:registered]])
+    end
+  end
 end

@@ -154,6 +154,8 @@ module Garager
         send_message(subscription_message)
       when "confirm_subscription"
         send_message(registration_message)
+        # The server forgets statuses when it restarts, so resend them
+        triggers.push([:registered])
       else
         if message["identifier"] == channel_id && message.key?("message")
           handle_trigger(message["message"])
