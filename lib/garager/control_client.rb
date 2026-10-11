@@ -80,6 +80,7 @@ module Garager
           @socket = connection
           @outbox = Thread::Queue.new
           @connected = true
+          @subscribed = false
           writer = task.async { write_loop(connection) }
           while (message = connection.read)
             handle_message(message.to_str)
@@ -87,6 +88,7 @@ module Garager
           log "Connection closed by server"
         ensure
           @connected = false
+          @subscribed = false
           @outbox&.close
           @outbox = nil
           writer&.stop
@@ -152,7 +154,12 @@ module Garager
       case message["type"]
       when "welcome"
         send_message(subscription_message)
+      when "ping"
+        # Lets the server know we're still here. Pongs go through the channel,
+        # so there's nowhere to send them until the subscription is confirmed.
+        send_message(pong_message) if @subscribed
       when "confirm_subscription"
+        @subscribed = true
         send_message(registration_message)
         # The server forgets statuses when it restarts, so resend them
         triggers.push([:registered])
