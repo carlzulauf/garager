@@ -93,11 +93,10 @@ module Garager
           @socket = nil
         end
       end
-    rescue Protocol::WebSocket::ClosedError => e
-      log "Connection closed. #{e.message}"
-    rescue IOError => e
-      raise if @running
-      log "Connection closed. #{e.message}"
+    # IOError (incl. EOFError) means the server dropped the connection, or we
+    # closed it in #stop. Either way, #start decides whether to reconnect.
+    rescue Protocol::WebSocket::ClosedError, IOError => e
+      log "Connection closed. #{e.class}: #{e.message}"
     rescue StandardError => e
       log "Connection failed. #{e.class}: #{e.message}", level: :warn
       debug e.full_message
