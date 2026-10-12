@@ -13,9 +13,8 @@
 
 let
   s = piSettings;
-  # false, "usb" or "module". Older settings files used true for a USB camera.
-  camera = if s.camera == true then "usb" else s.camera;
-  cameraModule = camera == "module";
+  # false, "usb" or "module"
+  cameraModule = s.camera == "module";
 in
 {
   imports = [
@@ -105,7 +104,7 @@ in
     serverUri = s.serverUri;
     deviceId = s.deviceId;
     gpioLine = s.gpioLine;
-    camera.enable = camera != false;
+    camera.enable = s.camera != false;
     # The first frames are dark while the module's auto exposure settles
     camera.warmupFrames = lib.mkIf cameraModule 30;
   };
