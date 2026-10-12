@@ -83,6 +83,8 @@ in
   # Only v1 (OV5647) and v2 (IMX219) modules are supported this way.
   sdImage.populateFirmwareCommands = lib.mkIf cameraModule (
     lib.mkAfter ''
+      # Copied read-only from the store by sd-image-aarch64.nix
+      chmod u+w firmware/config.txt
       cat >>firmware/config.txt <<'EOF'
 
       [all]
