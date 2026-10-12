@@ -36,6 +36,8 @@ The first `image` build takes a while, because some packages are compiled under 
 
 `setup` also creates an admin user, which logs in over SSH with your key and uses its password for `sudo`. Only a hash of the admin password is stored. Root can't log in over SSH. To change the admin user or password later, run `nix run .#pi -- admin` and then `deploy`.
 
+The admin user's shell is fish, with direnv (and nix-direnv), podman, and common command-line tools installed.
+
 ### 3. Boot and authorize the device
 
 Put the card in the Pi and power it on. After a minute or two it joins your wifi and is reachable as `garager.local` (or whatever hostname you chose).
