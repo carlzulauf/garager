@@ -37,7 +37,7 @@ in
   networking.hostName = s.hostname;
   networking.wireless = {
     enable = true;
-    networks.${s.wifiSsid}.pskRaw = s.wifiPskRaw;
+    networks.${s.wifiSsid}.psk = s.wifiPassword;
   };
 
   time.timeZone = s.timeZone;

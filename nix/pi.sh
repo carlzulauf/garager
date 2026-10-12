@@ -62,15 +62,13 @@ cmd_setup() {
     [[ "$reply" =~ ^[Yy] ]] || exit 0
   fi
 
-  local hostname ssid password psk key_path server_uri device_id tz camera gpio_line
+  local hostname ssid password key_path server_uri device_id tz camera gpio_line
   hostname="$(ask "Hostname" garager)"
   ssid="$(ask "Wifi network name (SSID)")"
-  read -r -s -p "Wifi password: " password
-  echo
-  # Store the derived key rather than the password itself
-  psk="$(wpa_passphrase "$ssid" "$password" | sed -n 's/^\s*psk=\([0-9a-f]\{64\}\)$/\1/p')"
-  if [[ -z "$psk" ]]; then
-    echo "Could not derive a WPA key. Passwords must be 8-63 characters." >&2
+  # Shown as typed, so typos are easy to spot
+  password="$(ask "Wifi password")"
+  if [[ ! "$password" =~ ^[[:print:]]{8,63}$ ]]; then
+    echo "Wifi passwords must be 8-63 printable characters." >&2
     exit 1
   fi
 
@@ -104,7 +102,7 @@ cmd_setup() {
     jq -n \
       --arg hostname "$hostname" \
       --arg ssid "$ssid" \
-      --arg psk "$psk" \
+      --arg password "$password" \
       --arg key "$(cat "$key_path")" \
       --arg server_uri "$server_uri" \
       --arg device_id "$device_id" \
@@ -114,7 +112,7 @@ cmd_setup() {
       '{
         hostname: $hostname,
         wifiSsid: $ssid,
-        wifiPskRaw: $psk,
+        wifiPassword: $password,
         sshKeys: [$key],
         serverUri: $server_uri,
         deviceId: $device_id,

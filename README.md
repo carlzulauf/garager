@@ -32,7 +32,7 @@ Run `lsblk` to find your SD card's device (or run `flash` with no device to list
 
 The first `image` build takes a while, because some packages are compiled under emulation. Later builds are fast.
 
-`config/pi.json` is gitignored. It holds the wifi key (derived from the password, not the password itself) and other machine-specific settings.
+`config/pi.json` is gitignored. It holds the wifi password in plaintext, so you can check it and fix typos by editing the file, along with other machine-specific settings. The password also ends up readable on the SD card, so treat the card and any built image as you would the password itself.
 
 ### 3. Boot and authorize the device
 

@@ -20,7 +20,7 @@
           {
             hostname = "garager";
             wifiSsid = "example";
-            wifiPskRaw = "0000000000000000000000000000000000000000000000000000000000000000";
+            wifiPassword = "example-password";
             sshKeys = [ ];
             serverUri = "wss://example.com/cable";
             deviceId = "garager";
@@ -56,7 +56,6 @@
             nixos-rebuild
             openssh
             util-linux
-            wpa_supplicant
             zstd
           ];
           text = builtins.readFile ./nix/pi.sh;
