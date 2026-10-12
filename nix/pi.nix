@@ -92,6 +92,7 @@ in
     extraGroups = [
       "wheel"
       "systemd-journal"
+      "gpio"
     ];
     hashedPassword = s.adminPasswordHash;
     openssh.authorizedKeys.keys = s.sshKeys;
