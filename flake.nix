@@ -4,9 +4,14 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    # Dotfiles installed for the Pi's admin user. Bump with `nix flake update dotbox`.
+    dotbox = {
+      url = "github:carlzulauf/dotbox";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils, dotbox }:
     let
       # Machine-specific Pi settings live in config/pi.json (gitignored), which
       # `nix run .#pi -- setup` creates. Flakes can't see untracked files, so the
@@ -38,7 +43,10 @@
       nixosConfigurations.pi = nixpkgs.lib.nixosSystem {
         modules = [
           ./nix/pi.nix
-          { _module.args.piSettings = piSettings; }
+          {
+            _module.args.piSettings = piSettings;
+            _module.args.dotbox = dotbox;
+          }
         ];
       };
     }

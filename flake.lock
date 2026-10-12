@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "dotbox": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791786686,
+        "narHash": "sha256-r/8oxiqcIuYVwyOy0+klosR3DegfIrexUV7Yzj0VQcg=",
+        "owner": "carlzulauf",
+        "repo": "dotbox",
+        "rev": "7d643afd3359606ca6e0450efe121bb05429cc97",
+        "type": "github"
+      },
+      "original": {
+        "owner": "carlzulauf",
+        "repo": "dotbox",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -36,6 +52,7 @@
     },
     "root": {
       "inputs": {
+        "dotbox": "dotbox",
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs"
       }

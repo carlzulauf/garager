@@ -36,7 +36,7 @@ The first `image` build takes a while, because some packages are compiled under 
 
 `setup` also creates an admin user, which logs in over SSH with your key and uses its password for `sudo`. Only a hash of the admin password is stored. Root can't log in over SSH. To change the admin user or password later, run `nix run .#pi -- admin` and then `deploy`.
 
-The admin user's shell is fish, with direnv (and nix-direnv), podman, and common command-line tools installed.
+The admin user's shell is fish, with direnv (and nix-direnv), podman, and common command-line tools installed. [dotbox](https://github.com/carlzulauf/dotbox) is built into the image at the version pinned in `flake.lock`. On first boot, before SSH starts, it's copied to `~/projects/dotbox` and its dotfiles are installed. Once the Pi is online, that copy is connected to GitHub so `git pull` works. To build with a newer dotbox, run `nix flake update dotbox`. Garager itself is cloned from GitHub into `~/projects/garager` once the Pi is online.
 
 ### 3. Boot and authorize the device
 
