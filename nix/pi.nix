@@ -249,6 +249,9 @@ in
     ''
   );
   boot.kernelModules = lib.optional cameraModule "bcm2835-v4l2";
+  # On 6.18, bcm2835-v4l2's frame transfers fail ("vchiq_bulk_receive failed -22")
+  # and captures never get a frame. 6.12 (LTS) still works.
+  boot.kernelPackages = lib.mkIf cameraModule pkgs.linuxPackages_6_12;
 
   environment.systemPackages = with pkgs; [
     libgpiod

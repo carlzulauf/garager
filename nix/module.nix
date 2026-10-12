@@ -146,7 +146,8 @@ in
 
       script = ''
         while true; do
-          ffmpeg -loglevel error -f v4l2 \
+          # A capture that never gets a frame would otherwise block the loop forever
+          timeout 60 ffmpeg -loglevel error -f v4l2 \
             ${lib.optionalString (cfg.camera.resolution != null) "-video_size ${cfg.camera.resolution}"} \
             -i ${lib.escapeShellArg cfg.camera.device} \
             ${lib.optionalString (cfg.camera.warmupFrames > 0) "-vf \"select='gte(n,${toString cfg.camera.warmupFrames})'\""} \
