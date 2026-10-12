@@ -131,6 +131,11 @@ in
         UMask = "0077";
         Restart = "always";
         RestartSec = 5;
+      }
+      // lib.optionalAttrs (cfg.environment == "production") {
+        # Idle the relay line with a pull-up, like bin/garage_toggle leaves it,
+        # so the relay's LED is off from boot. "-": start garager regardless.
+        ExecStartPre = "-${lib.getExe' pkgs.libgpiod "gpioget"} --consumer garager --bias pull-up --numeric ${lib.escapeShellArg cfg.gpioLine}";
       };
     };
 

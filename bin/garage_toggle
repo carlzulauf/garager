@@ -7,7 +7,9 @@
 #
 # The relay is active-low: pull the line low for half a second to short the
 # garage door opener's terminals, then drive it high again and release it.
+# Released, the line becomes an input, and the pull-up keeps the relay's LED
+# off. The Pi's default pull-down would leave it dimly lit.
 
 set -euo pipefail
 
-exec gpioset --consumer garager --toggle 500ms,0 "${GARAGER_GPIO_LINE:-GPIO17}=0"
+exec gpioset --consumer garager --bias pull-up --toggle 500ms,0 "${GARAGER_GPIO_LINE:-GPIO17}=0"

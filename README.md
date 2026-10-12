@@ -72,7 +72,7 @@ A Pi set up before admin users existed only accepts root logins. Add the admin u
 
 ### Wiring
 
-The relay's control input goes to GPIO17 (physical pin 11), which is the default. The relay is active-low: garager pulls the line low for half a second to "press" the button. To use a different line, change it during `setup` or edit `gpioLine` in `config/pi.json` and redeploy.
+The relay's control input goes to GPIO17 (physical pin 11), which is the default. The relay is active-low: garager pulls the line low for half a second to "press" the button. Between presses the line is an input with the Pi's pull-up enabled, which keeps the relay's LED off. To use a different line, change it during `setup` or edit `gpioLine` in `config/pi.json` and redeploy.
 
 ### Camera
 
