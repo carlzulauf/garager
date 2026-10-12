@@ -13,6 +13,9 @@
 
 let
   s = piSettings;
+  # false, "usb" or "module". Older settings files used true for a USB camera.
+  camera = if s.camera == true then "usb" else s.camera;
+  cameraModule = camera == "module";
 in
 {
   imports = [
@@ -75,6 +78,21 @@ in
   };
   boot.loader.generic-extlinux-compatible.configurationLimit = 5;
 
+  # The camera module runs on the GPU firmware's legacy camera stack, which the
+  # bcm2835-v4l2 driver exposes as an ordinary V4L2 device at /dev/video0.
+  # Only v1 (OV5647) and v2 (IMX219) modules are supported this way.
+  sdImage.populateFirmwareCommands = lib.mkIf cameraModule (
+    lib.mkAfter ''
+      cat >>firmware/config.txt <<'EOF'
+
+      [all]
+      start_x=1
+      gpu_mem=128
+      EOF
+    ''
+  );
+  boot.kernelModules = lib.optional cameraModule "bcm2835-v4l2";
+
   environment.systemPackages = with pkgs; [
     libgpiod
     v4l-utils
@@ -85,6 +103,8 @@ in
     serverUri = s.serverUri;
     deviceId = s.deviceId;
     gpioLine = s.gpioLine;
-    camera.enable = s.camera;
+    camera.enable = camera != false;
+    # The first frames are dark while the module's auto exposure settles
+    camera.warmupFrames = lib.mkIf cameraModule 30;
   };
 }

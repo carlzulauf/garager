@@ -88,8 +88,15 @@ cmd_setup() {
   device_id="$(ask "Device name shown on the control server" "$hostname")"
   tz="$(ask "Time zone" "$(timedatectl show -p Timezone --value 2>/dev/null || echo UTC)")"
   gpio_line="$(ask "GPIO line wired to the relay" GPIO17)"
-  read -r -p "Enable a USB camera (V4L2)? [y/N] " reply
-  if [[ "$reply" =~ ^[Yy] ]]; then camera=true; else camera=false; fi
+  camera="$(ask "Camera: none, usb (webcam), or module (Pi camera module v1/v2)" none)"
+  case "$camera" in
+    none) camera=false ;;
+    usb | module) camera="\"$camera\"" ;;
+    *)
+      echo "Unknown camera: $camera" >&2
+      exit 1
+      ;;
+  esac
 
   mkdir -p "$(dirname "$settings")"
   (

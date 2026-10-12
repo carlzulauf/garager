@@ -78,6 +78,12 @@ in
         example = "1024x768";
         description = "Capture resolution. Uses the camera default when null.";
       };
+
+      warmupFrames = lib.mkOption {
+        type = lib.types.ints.unsigned;
+        default = 0;
+        description = "Frames to discard before each snapshot, for cameras whose first frames are badly exposed.";
+      };
     };
   };
 
@@ -138,6 +144,7 @@ in
           ffmpeg -loglevel error -f v4l2 \
             ${lib.optionalString (cfg.camera.resolution != null) "-video_size ${cfg.camera.resolution}"} \
             -i ${lib.escapeShellArg cfg.camera.device} \
+            ${lib.optionalString (cfg.camera.warmupFrames > 0) "-vf \"select='gte(n,${toString cfg.camera.warmupFrames})'\""} \
             -frames:v 1 -update 1 -y ${captureDir}/capture.tmp.jpg \
             && mv ${captureDir}/capture.tmp.jpg ${captureDir}/capture.jpg
           sleep ${toString cfg.camera.interval}

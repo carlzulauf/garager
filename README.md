@@ -68,7 +68,19 @@ The relay's control input goes to GPIO17 (physical pin 11), which is the default
 
 ### Camera
 
-If you answer yes to the camera question during setup, the Pi captures a snapshot from `/dev/video0` every 10 seconds and sends it to the control server. This works with USB (UVC) webcams. The Raspberry Pi camera module needs extra libcamera setup that isn't covered here. With no camera, the server shows a placeholder image.
+If you choose a camera during setup, the Pi captures a snapshot from `/dev/video0` every 10 seconds and sends it to the control server. With no camera, the server shows a placeholder image.
+
+- `usb`: USB (UVC) webcams.
+- `module`: the Raspberry Pi camera module v1 (OV5647) or v2 (IMX219), using the GPU firmware's legacy camera stack. The v3 and HQ camera modules need the newer libcamera stack, which isn't supported.
+
+The `module` option changes the firmware's `config.txt`, which only `image` writes. `deploy` doesn't update it. To switch a running Pi to the camera module without reflashing, set `"camera": "module"` in `config/pi.json`, run `deploy`, and then:
+
+```sh
+ssh root@garager.local
+mount /dev/disk/by-label/FIRMWARE /mnt
+printf '\n[all]\nstart_x=1\ngpu_mem=128\n' >> /mnt/config.txt
+umount /mnt && reboot
+```
 
 ## Using the NixOS module elsewhere
 
