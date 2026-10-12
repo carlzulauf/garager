@@ -20,6 +20,22 @@ RSpec.describe Garager::ControlClient do
     end
   end
 
+  describe "origin header" do
+    def origin_for(server_uri)
+      described_class.new(server_uri: server_uri, logger: LOGGER).send(:origin)
+    end
+
+    it "leaves out the default port" do
+      expect(origin_for("wss://example.com/cable")).to eq("https://example.com")
+      expect(origin_for("ws://example.com/cable")).to eq("http://example.com")
+    end
+
+    it "keeps a non-default port" do
+      expect(origin_for("wss://example.com:8443/cable")).to eq("https://example.com:8443")
+      expect(origin_for("ws://localhost:3000/cable")).to eq("http://localhost:3000")
+    end
+  end
+
   describe "subscription confirmation" do
     it "registers, then triggers a status resend" do
       expect(subject).to receive(:send_message)

@@ -223,8 +223,11 @@ module Garager
       end
     end
 
+    # Browsers leave the default port out of Origin, and the server matches
+    # allowed origins exactly, so "https://host:443" would be rejected
     def origin
-      "#{http_scheme}://#{host}:#{port}"
+      default_port = http_scheme == "https" ? 443 : 80
+      port == default_port ? "#{http_scheme}://#{host}" : "#{http_scheme}://#{host}:#{port}"
     end
 
     def connection_headers
