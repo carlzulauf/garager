@@ -2,7 +2,7 @@
 
 Opens a secure websocket connection to a control server, so your garage door can be opened from anywhere (that can access your control server) with low latency (connection is already open).
 
-Garager runs on a Raspberry Pi wired to a relay across the garage door opener's button terminals. The Pi runs NixOS, built from this repository as a ready-to-boot SD card image with your wifi network and SSH key already configured.
+Garager runs on a Raspberry Pi wired to a relay across the garage door opener's button terminals. The Pi runs NixOS, built from this repository as a ready-to-boot SD card image with your wifi network, admin user and SSH key already configured.
 
 ## Raspberry Pi setup
 
@@ -23,7 +23,7 @@ On other distros, install `qemu-user-static` with binfmt support and add `extra-
 ### 2. Build and flash
 
 ```sh
-nix run .#pi -- setup              # asks for wifi, SSH key, control server; writes config/pi.json
+nix run .#pi -- setup              # asks for wifi, admin user, SSH key, control server; writes config/pi.json
 nix run .#pi -- image              # builds the SD card image
 nix run .#pi -- flash /dev/sdX     # writes it to the SD card (asks before erasing)
 ```
@@ -33,6 +33,8 @@ Run `lsblk` to find your SD card's device (or run `flash` with no device to list
 The first `image` build takes a while, because some packages are compiled under emulation. Later builds are fast.
 
 `config/pi.json` is gitignored. It holds the wifi password in plaintext, so you can check it and fix typos by editing the file, along with other machine-specific settings. The password also ends up readable on the SD card, so treat the card and any built image as you would the password itself.
+
+`setup` also creates an admin user, which logs in over SSH with your key and uses its password for `sudo`. Only a hash of the admin password is stored. Root can't log in over SSH. To change the admin user or password later, run `nix run .#pi -- admin` and then `deploy`.
 
 ### 3. Boot and authorize the device
 
@@ -60,7 +62,11 @@ After pulling changes or editing `config/pi.json`, push them to the running Pi:
 nix run .#pi -- deploy
 ```
 
-`pubkey`, `logs` and `deploy` default to `<hostname>.local`. Pass a host or IP address as an extra argument to override it, e.g. `nix run .#pi -- logs 192.168.1.50`. You can also `ssh root@garager.local` directly.
+`pubkey` and `deploy` ask for the admin password, which they use for `sudo` on the Pi.
+
+`pubkey`, `logs` and `deploy` connect to `<hostname>.local` as the admin user. Pass a host or IP address as an extra argument to override it, e.g. `nix run .#pi -- logs 192.168.1.50`, or `user@host` to log in as a different user. You can also `ssh <admin>@garager.local` directly.
+
+A Pi set up before admin users existed only accepts root logins. Add the admin user with `nix run .#pi -- admin`, then deploy once as root with `nix run .#pi -- deploy root@garager.local`. From then on, root SSH logins are disabled.
 
 ### Wiring
 
@@ -76,7 +82,8 @@ If you choose a camera during setup, the Pi captures a snapshot from `/dev/video
 The `module` option changes the firmware's `config.txt`, which only `image` writes. `deploy` doesn't update it. To switch a running Pi to the camera module without reflashing, set `"camera": "module"` in `config/pi.json`, run `deploy`, and then:
 
 ```sh
-ssh root@garager.local
+ssh <admin>@garager.local
+sudo -i
 mount /dev/disk/by-label/FIRMWARE /mnt
 printf '\n[all]\nstart_x=1\ngpu_mem=128\n' >> /mnt/config.txt
 umount /mnt && reboot

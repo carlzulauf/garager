@@ -56,17 +56,33 @@ in
     settings = {
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
-      PermitRootLogin = "prohibit-password";
+      PermitRootLogin = "no";
     };
   };
-  users.users.root.openssh.authorizedKeys.keys = s.sshKeys;
+
+  # Log in as the admin user and use sudo. config/pi.json is the source of
+  # truth for accounts, so changing the password there and deploying applies it.
+  users.mutableUsers = false;
+  users.users.${s.adminUser} = {
+    isNormalUser = true;
+    extraGroups = [
+      "wheel"
+      "systemd-journal"
+    ];
+    hashedPassword = s.adminPasswordHash;
+    openssh.authorizedKeys.keys = s.sshKeys;
+  };
 
   nix.settings = {
     experimental-features = [
       "nix-command"
       "flakes"
     ];
-    trusted-users = [ "root" ];
+    # Lets deploy copy builds to the Pi as the admin user
+    trusted-users = [
+      "root"
+      "@wheel"
+    ];
   };
 
   # Keep the SD card from filling up with old generations

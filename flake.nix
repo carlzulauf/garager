@@ -22,6 +22,9 @@
             wifiSsid = "example";
             wifiPassword = "example-password";
             sshKeys = [ ];
+            adminUser = "admin";
+            # mkpasswd -m yescrypt, of "example-password"
+            adminPasswordHash = "$y$j9T$EDNGnVFrcho7oe4A777.70$ZO.zBDopMfvI19dkD7PCkqU3REpouCoVmavhuvfrPBC";
             serverUri = "wss://example.com/cable";
             deviceId = "garager";
             timeZone = "UTC";
@@ -53,6 +56,7 @@
             git
             gnused
             jq
+            mkpasswd
             nixos-rebuild
             openssh
             util-linux

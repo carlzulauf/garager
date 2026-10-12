@@ -6,14 +6,16 @@ usage() {
 Usage: nix run .#pi -- <command>
 
 Commands:
-  setup            Create config/pi.json (wifi, ssh key, control server)
+  setup            Create config/pi.json (wifi, admin user, ssh key, control server)
+  admin            Change the admin user or password in config/pi.json
   image            Build the SD card image
   flash <device>   Write the image to an SD card, e.g. /dev/sdb
   deploy [host]    Push the current config/code to a running Pi
   pubkey [host]    Print the Pi's public key, to authorize it on the control server
   logs [host]      Follow the garager service logs on the Pi
 
-host defaults to <hostname>.local from config/pi.json
+host defaults to <hostname>.local from config/pi.json, logged in as the admin
+user. Pass user@host to log in as someone else.
 EOF
 }
 
@@ -30,19 +32,25 @@ require_settings() {
     echo "Missing config/pi.json. Run: nix run .#pi -- setup" >&2
     exit 1
   fi
+  if [[ "$(setting adminUser)" == "null" ]]; then
+    echo "config/pi.json has no admin user. Run: nix run .#pi -- admin" >&2
+    exit 1
+  fi
 }
 
 setting() {
   jq -r ".$1" "$settings"
 }
 
+# Prints user@host for ssh
 target_host() {
-  if [[ -n "${1:-}" ]]; then
-    echo "$1"
-  else
-    require_settings
-    echo "$(setting hostname).local"
+  local host="${1:-}"
+  if [[ "$host" == *@* ]]; then
+    echo "$host"
+    return
   fi
+  require_settings
+  echo "$(setting adminUser)@${host:-$(setting hostname).local}"
 }
 
 ask() {
@@ -56,13 +64,57 @@ ask() {
   fi
 }
 
+# Sets admin_user and admin_password_hash
+ask_admin() {
+  admin_user="$(ask "Admin username (for ssh and sudo)" "${USER:-admin}")"
+  if [[ ! "$admin_user" =~ ^[a-z_][a-z0-9_-]{0,31}$ ]] || [[ "$admin_user" == root ]]; then
+    echo "Invalid username: $admin_user" >&2
+    exit 1
+  fi
+
+  local password confirm
+  read -r -s -p "Admin password: " password
+  echo >&2
+  read -r -s -p "Admin password again: " confirm
+  echo >&2
+  if [[ "$password" != "$confirm" ]]; then
+    echo "Passwords don't match." >&2
+    exit 1
+  fi
+  if [[ -z "$password" ]]; then
+    echo "The admin password can't be empty." >&2
+    exit 1
+  fi
+  admin_password_hash="$(printf '%s' "$password" | mkpasswd -m yescrypt --stdin)"
+}
+
+cmd_admin() {
+  if [[ ! -f "$settings" ]]; then
+    echo "Missing config/pi.json. Run: nix run .#pi -- setup" >&2
+    exit 1
+  fi
+  local admin_user admin_password_hash
+  ask_admin
+  local updated
+  updated="$(jq \
+    --arg admin_user "$admin_user" \
+    --arg admin_password_hash "$admin_password_hash" \
+    '.adminUser = $admin_user | .adminPasswordHash = $admin_password_hash' \
+    "$settings")"
+  (
+    umask 077
+    echo "$updated" >"$settings"
+  )
+  echo "Updated config/pi.json. Next: nix run .#pi -- deploy"
+}
+
 cmd_setup() {
   if [[ -f "$settings" ]]; then
     read -r -p "config/pi.json already exists. Overwrite? [y/N] " reply
     [[ "$reply" =~ ^[Yy] ]] || exit 0
   fi
 
-  local hostname ssid password key_path server_uri device_id tz camera gpio_line
+  local hostname ssid password admin_user admin_password_hash key_path server_uri device_id tz camera gpio_line
   hostname="$(ask "Hostname" garager)"
   ssid="$(ask "Wifi network name (SSID)")"
   # Shown as typed, so typos are easy to spot
@@ -72,11 +124,13 @@ cmd_setup() {
     exit 1
   fi
 
+  ask_admin
+
   local default_key=""
   for k in "$HOME/.ssh/id_ed25519.pub" "$HOME/.ssh/id_ecdsa.pub" "$HOME/.ssh/id_rsa.pub"; do
     if [[ -f "$k" ]]; then default_key="$k"; break; fi
   done
-  key_path="$(ask "SSH public key for root login" "$default_key")"
+  key_path="$(ask "SSH public key for $admin_user" "$default_key")"
   if [[ ! -f "$key_path" ]]; then
     echo "No such file: $key_path" >&2
     exit 1
@@ -103,6 +157,8 @@ cmd_setup() {
       --arg hostname "$hostname" \
       --arg ssid "$ssid" \
       --arg password "$password" \
+      --arg admin_user "$admin_user" \
+      --arg admin_password_hash "$admin_password_hash" \
       --arg key "$(cat "$key_path")" \
       --arg server_uri "$server_uri" \
       --arg device_id "$device_id" \
@@ -113,6 +169,8 @@ cmd_setup() {
         hostname: $hostname,
         wifiSsid: $ssid,
         wifiPassword: $password,
+        adminUser: $admin_user,
+        adminPasswordHash: $admin_password_hash,
         sshKeys: [$key],
         serverUri: $server_uri,
         deviceId: $device_id,
@@ -199,41 +257,54 @@ cmd_flash() {
 
 ssh_opts=(-o StrictHostKeyChecking=accept-new)
 
+# Runs a shell command as root on the Pi. Asks for the admin password here and
+# passes it to sudo on stdin, so output isn't mixed up with a remote password prompt.
+remote_sudo() {
+  local host="$1" command="$2" password
+  read -r -s -p "Sudo password for $host: " password
+  echo >&2
+  # The command is quoted here on purpose, for the remote shell
+  # shellcheck disable=SC2029
+  printf '%s\n' "$password" |
+    ssh "${ssh_opts[@]}" "$host" "sudo -S -p '' sh -c $(printf '%q' "$command")"
+}
+
 cmd_deploy() {
   require_settings
   check_aarch64
   local host
   host="$(target_host "${1:-}")"
 
+  echo "Deploying to $host. Enter the admin password when asked for the sudo password."
   nixos-rebuild switch --impure --flake "$root#pi" \
-    --target-host "root@$host" --use-substitutes
+    --target-host "$host" --ask-sudo-password --use-substitutes
 
   # Reuse an existing device key if there is one in config/
   if [[ -f "$root/config/production.yaml" ]]; then
     echo "Copying config/production.yaml to $host"
-    scp "${ssh_opts[@]}" "$root/config/production.yaml" "root@$host:/var/lib/garager/production.yaml"
-    ssh "${ssh_opts[@]}" "root@$host" \
-      "chown garager:garager /var/lib/garager/production.yaml && chmod 600 /var/lib/garager/production.yaml && systemctl restart garager"
+    scp "${ssh_opts[@]}" "$root/config/production.yaml" "$host:garager-production.yaml"
+    remote_sudo "$host" "install -o garager -g garager -m 600 garager-production.yaml /var/lib/garager/production.yaml && systemctl restart garager && rm garager-production.yaml"
   fi
 }
 
 cmd_pubkey() {
   local host
   host="$(target_host "${1:-}")"
-  ssh "${ssh_opts[@]}" "root@$host" \
-    "sed -n '/^public_key:/,/END PUBLIC KEY/p' /var/lib/garager/production.yaml | sed '1d; s/^  //'"
+  remote_sudo "$host" "sed -n '/^public_key:/,/END PUBLIC KEY/p' /var/lib/garager/production.yaml" |
+    sed '1d; s/^  //'
 }
 
 cmd_logs() {
   local host
   host="$(target_host "${1:-}")"
-  ssh "${ssh_opts[@]}" "root@$host" journalctl -u garager -u garager-camera -f
+  ssh "${ssh_opts[@]}" "$host" journalctl -u garager -u garager-camera -f
 }
 
 command="${1:-}"
 shift || true
 case "$command" in
   setup) cmd_setup "$@" ;;
+  admin) cmd_admin "$@" ;;
   image) cmd_image "$@" ;;
   flash) cmd_flash "$@" ;;
   deploy) cmd_deploy "$@" ;;
