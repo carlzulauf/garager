@@ -1,3 +1,4 @@
+require "resolv"
 require "async/websocket/client"
 require "async/http/endpoint"
 
@@ -99,6 +100,9 @@ module Garager
     # closed it in #stop. Either way, #start decides whether to reconnect.
     rescue Protocol::WebSocket::ClosedError, IOError => e
       log "Connection closed. #{e.class}: #{e.message}"
+    rescue Socket::ResolutionError => e
+      log "Connection failed. #{e.class}: #{e.message}", level: :warn
+      reset_resolver
     rescue StandardError => e
       log "Connection failed. #{e.class}: #{e.message}", level: :warn
       debug e.full_message
@@ -193,6 +197,14 @@ module Garager
         connection.write(Protocol::WebSocket::TextMessage.new(message))
         connection.flush
       end
+    end
+
+    # Async looks up hostnames with Resolv, whose default resolver keeps the DNS
+    # settings it read from /etc/resolv.conf when it was loaded. If that was before
+    # the network came up, every lookup fails until restart. Fresh resolvers read
+    # the current settings.
+    def reset_resolver
+      Resolv::DefaultResolver.replace_resolvers([Resolv::Hosts.new, Resolv::DNS.new])
     end
 
     def endpoint

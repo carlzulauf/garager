@@ -10,6 +10,14 @@ RSpec.describe Garager::ControlClient do
       expect { subject.run }.not_to raise_error
       expect(subject).not_to be_connected
     end
+
+    it "reloads DNS settings when the server's hostname doesn't resolve" do
+      allow(Async::WebSocket::Client).to receive(:connect)
+        .and_raise(Socket::ResolutionError, "getaddrinfo: Name or service not known")
+      expect(Resolv::DefaultResolver).to receive(:replace_resolvers)
+        .with([an_instance_of(Resolv::Hosts), an_instance_of(Resolv::DNS)])
+      expect { subject.run }.not_to raise_error
+    end
   end
 
   describe "subscription confirmation" do
